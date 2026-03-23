@@ -1,14 +1,12 @@
 package com.bolaofc.bolaofc.user;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
+@Table(name="usuarios")
 public class User {
 
     @Id
@@ -23,6 +21,11 @@ public class User {
 
     public User() {
 
+    }
+    public User(String nome,String email, String senha){
+        this.nome = nome;
+        this.email = email;
+        this.senha = senha;
     }
 
     public User(UUID id, String nome, String email, String senha, double saldo, LocalDateTime criadoEm) {
