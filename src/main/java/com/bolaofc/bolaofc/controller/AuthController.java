@@ -3,48 +3,76 @@ package com.bolaofc.bolaofc.controller;
 import com.bolaofc.bolaofc.infraSecurity.TokenService;
 import com.bolaofc.bolaofc.user.User;
 import com.bolaofc.bolaofc.user.UserService;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
-    private final UserService userService;
-    @Autowired
-    AuthenticationManager authenticationManager;
-    @Autowired
-    TokenService tokenService;
-    public AuthController(UserService userService){
-        this.userService = userService;
-    }
 
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private TokenService tokenService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @PostMapping("/register")
-    public ResponseEntity register(@RequestBody User data){
-        if(this.userService.buscarPorEmail(data.getEmail())!=null)
-            return ResponseEntity.badRequest().build();
-        String encryptedPassword = new BCryptPasswordEncoder().encode(data.getSenha());
-        User newUser = new User(data.getNome(),data.getEmail(),encryptedPassword);
+    public ResponseEntity register(@RequestBody Map<String, String> data) {
+        String nome = data.get("nome");
+        String email = data.get("email");
+        String senhaPura = data.get("senha");
+
+        if (this.userService.buscarPorEmail(email) != null) {
+            return ResponseEntity.badRequest().body("Usuário já existe");
+        }
+
+        User newUser = new User();
+        newUser.setNome(nome);
+        newUser.setEmail(email);
+        newUser.setSenha(senhaPura);
+
         this.userService.salvar(newUser);
-        return ResponseEntity.ok().build();
+
+        return ResponseEntity.ok("Usuário criado com sucesso!");
     }
+
     @PostMapping("/login")
-    public ResponseEntity login(@RequestBody @Valid User data){
-        var usernameSenha = new UsernamePasswordAuthenticationToken(data.getEmail(), data.getSenha());
-        var auth = this.authenticationManager.authenticate(usernameSenha);
-        var token = tokenService.generateToken((User) auth.getPrincipal());
-        return ResponseEntity.ok(token);
+    public ResponseEntity login(@RequestBody Map<String, String> data){
+        String email = data.get("email");
+        String senhaDigitada = data.get("senha");
+
+        System.out.println("--- DEBUG LOGIN ---");
+        System.out.println("Email: " + email);
+        System.out.println("Senha digitada: " + senhaDigitada);
+
+        try {
+            User user = userService.buscarPorEmail(email);
+            if (user == null) return ResponseEntity.status(401).body("Usuário não encontrado");
+
+            // Validação manual para o LOG
+            boolean matches = passwordEncoder.matches(senhaDigitada, user.getSenha());
+            System.out.println("A senha bate no manual? " + matches);
+
+            var usernameSenha = new UsernamePasswordAuthenticationToken(email, senhaDigitada);
+            var auth = authenticationManager.authenticate(usernameSenha);
+
+            var token = tokenService.generateToken((User) auth.getPrincipal());
+            return ResponseEntity.ok(Map.of("token", token));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body("Credenciais inválidas: " + e.getMessage());
+        }
     }
-
-
-
 }
-

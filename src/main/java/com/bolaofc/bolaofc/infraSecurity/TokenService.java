@@ -6,6 +6,7 @@ import com.auth0.jwt.exceptions.JWTCreationException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.bolaofc.bolaofc.user.User;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -18,16 +19,16 @@ public class TokenService {
     private String secret;
 
 
-    public String generateToken(User user){
+    public String generateToken(UserDetails user){
         try{
             Algorithm algorithm = Algorithm.HMAC256(secret);
-            String token = JWT.create().withIssuer("auth-api")
-                    .withSubject(user.getEmail())
+            return JWT.create()
+                    .withIssuer("auth-api")
+                    .withSubject(user.getUsername())
                     .withExpiresAt(getExpirationDate())
                     .sign(algorithm);
-            return token;
         }catch (JWTCreationException exception){
-            throw new RuntimeException("Errp ao gerar token", exception);
+            throw new RuntimeException("Erro ao gerar token", exception);
         }
     }
     public String validateToken(String token){
