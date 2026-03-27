@@ -1,6 +1,5 @@
-package com.bolaofc.bolaofc.domain;
+package com.bolaofc.bolaofc.bolao;
 
-import com.bolaofc.bolaofc.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;

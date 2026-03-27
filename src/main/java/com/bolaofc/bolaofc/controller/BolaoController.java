@@ -1,13 +1,12 @@
 package com.bolaofc.bolaofc.controller;
 
-import com.bolaofc.bolaofc.domain.Bolao;
-import com.bolaofc.bolaofc.domain.BolaoService;
+import com.bolaofc.bolaofc.bolao.Bolao;
+import com.bolaofc.bolaofc.bolao.BolaoService;
 import com.bolaofc.bolaofc.user.User;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController

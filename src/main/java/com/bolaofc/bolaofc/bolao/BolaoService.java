@@ -1,4 +1,4 @@
-package com.bolaofc.bolaofc.domain;
+package com.bolaofc.bolaofc.bolao;
 
 import com.bolaofc.bolaofc.user.User;
 import org.springframework.stereotype.Service;
@@ -23,4 +23,9 @@ public class BolaoService {
     public Bolao entrarNoBolao(String codigoConvite){
         return bolaoRepository.findByCodigoConvite(codigoConvite);
     }
+    public Bolao buscarPorId(UUID id){
+        return bolaoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Bolão não encontrado"));
+    }
 }
+

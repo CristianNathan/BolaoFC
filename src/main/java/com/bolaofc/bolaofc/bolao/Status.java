@@ -1,4 +1,4 @@
-package com.bolaofc.bolaofc.domain;
+package com.bolaofc.bolaofc.bolao;
 
 
 public enum Status {
