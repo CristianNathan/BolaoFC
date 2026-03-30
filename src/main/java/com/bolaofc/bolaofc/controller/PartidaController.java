@@ -1,6 +1,7 @@
 package com.bolaofc.bolaofc.controller;
 
 import com.bolaofc.bolaofc.bolao.BolaoService;
+import com.bolaofc.bolaofc.partida.Gols;
 import com.bolaofc.bolaofc.partida.Partida;
 import com.bolaofc.bolaofc.partida.PartidaService;
 import com.bolaofc.bolaofc.user.User;
@@ -34,5 +35,10 @@ public class PartidaController {
         return ResponseEntity.ok(partidas);
 
     }
+    @PutMapping("/partidas/{id}/resultado")
+    public ResponseEntity resultado(@PathVariable UUID id, @RequestBody Gols gols){
+        return ResponseEntity.ok(partidaService.atualizarResultado(id,gols.golsCasa(), gols.golsFora()));
+    }
+
 
 }
