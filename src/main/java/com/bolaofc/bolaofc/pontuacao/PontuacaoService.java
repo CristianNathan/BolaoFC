@@ -4,6 +4,8 @@ import com.bolaofc.bolaofc.palpite.Palpite;
 import com.bolaofc.bolaofc.palpite.PalpiteRepository;
 import com.bolaofc.bolaofc.palpite.PalpitesStatus;
 import com.bolaofc.bolaofc.partida.Partida;
+import com.bolaofc.bolaofc.transacao.Tipo;
+import com.bolaofc.bolaofc.transacao.TransacaoService;
 import com.bolaofc.bolaofc.user.UserRepository;
 import org.springframework.stereotype.Service;
 
@@ -11,10 +13,12 @@ import org.springframework.stereotype.Service;
 public class PontuacaoService {
     private final PalpiteRepository palpiteRepository;
     private final UserRepository userRepository;
+    private final TransacaoService transacaoService;
 
-    public PontuacaoService(PalpiteRepository palpiteRepository, UserRepository userRepository) {
+    public PontuacaoService(PalpiteRepository palpiteRepository, UserRepository userRepository, TransacaoService transacaoService) {
         this.palpiteRepository = palpiteRepository;
         this.userRepository = userRepository;
+        this.transacaoService = transacaoService;
     }
     public void calcularPontuacao(Partida partida) {
             var palpites = palpiteRepository.findByPartida(partida);
@@ -33,12 +37,20 @@ public class PontuacaoService {
                 ) {
                     pontos = 5;
                 }
+                var user = palpite.getUser();
+                if (pontos > 0) {
+                    transacaoService.registrarTransacao(
+                            user,
+                            pontos,
+                            Tipo.CREDITO,
+                            "Palpite correto - " + partida.getTimeCasa() + " x " + partida.getTimeFora()
+                    );
+                }
 
                 palpite.setPontosGanhos(pontos);
                 palpite.setStatus(pontos > 0 ? PalpitesStatus.CORRETO : PalpitesStatus.INCORRETO);
                 palpiteRepository.save(palpite);
 
-                var user = palpite.getUser();
                 user.setSaldo(user.getSaldo() + pontos);
                 userRepository.save(user);
             }

@@ -2,6 +2,7 @@ package com.bolaofc.bolaofc.partida;
 
 import com.bolaofc.bolaofc.bolao.Bolao;
 import com.bolaofc.bolaofc.pontuacao.PontuacaoService;
+import com.bolaofc.bolaofc.transacao.TransacaoService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,7 +13,7 @@ public class PartidaService {
     private final PartidaRepository partidaRepository;
     private final PontuacaoService pontuacaoService;
 
-    public PartidaService(PartidaRepository partidaRepository, PontuacaoService pontuacaoService) {
+    public PartidaService(PartidaRepository partidaRepository, PontuacaoService pontuacaoService, TransacaoService transacaoService) {
         this.partidaRepository = partidaRepository;
         this.pontuacaoService = pontuacaoService;
     }
