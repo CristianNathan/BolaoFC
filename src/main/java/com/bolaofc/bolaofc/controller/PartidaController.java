@@ -1,6 +1,7 @@
 package com.bolaofc.bolaofc.controller;
 
 import com.bolaofc.bolaofc.bolao.BolaoService;
+import com.bolaofc.bolaofc.football.FootballApiService;
 import com.bolaofc.bolaofc.partida.Gols;
 import com.bolaofc.bolaofc.partida.Partida;
 import com.bolaofc.bolaofc.partida.PartidaService;
@@ -16,10 +17,12 @@ import java.util.UUID;
 public class PartidaController {
     private final PartidaService partidaService;
     private final BolaoService bolaoService;
+    private final FootballApiService footballApiService;
 
-    public PartidaController(PartidaService partidaService, BolaoService bolaoService) {
+    public PartidaController(PartidaService partidaService, BolaoService bolaoService, FootballApiService footballApiService) {
         this.partidaService = partidaService;
         this.bolaoService = bolaoService;
+        this.footballApiService = footballApiService;
     }
 
     @PostMapping("/partidas")
@@ -38,6 +41,11 @@ public class PartidaController {
     @PutMapping("/partidas/{id}/resultado")
     public ResponseEntity resultado(@PathVariable UUID id, @RequestBody Gols gols){
         return ResponseEntity.ok(partidaService.atualizarResultado(id,gols.golsCasa(), gols.golsFora()));
+    }
+    @GetMapping("/partidas/testar-api")
+    public ResponseEntity testarApi(){
+        String resultado = footballApiService.buscarPartidas();
+        return ResponseEntity.ok(resultado);
     }
 
 
