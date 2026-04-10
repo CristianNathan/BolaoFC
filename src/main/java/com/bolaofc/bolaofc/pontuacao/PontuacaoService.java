@@ -1,5 +1,6 @@
 package com.bolaofc.bolaofc.pontuacao;
 
+import com.bolaofc.bolaofc.bolao.RakingService;
 import com.bolaofc.bolaofc.palpite.Palpite;
 import com.bolaofc.bolaofc.palpite.PalpiteRepository;
 import com.bolaofc.bolaofc.palpite.PalpitesStatus;
@@ -14,11 +15,13 @@ public class PontuacaoService {
     private final PalpiteRepository palpiteRepository;
     private final UserRepository userRepository;
     private final TransacaoService transacaoService;
+    private final RakingService rakingService;
 
-    public PontuacaoService(PalpiteRepository palpiteRepository, UserRepository userRepository, TransacaoService transacaoService) {
+    public PontuacaoService(PalpiteRepository palpiteRepository, UserRepository userRepository, TransacaoService transacaoService, RakingService rakingService) {
         this.palpiteRepository = palpiteRepository;
         this.userRepository = userRepository;
         this.transacaoService = transacaoService;
+        this.rakingService = rakingService;
     }
     public void calcularPontuacao(Partida partida) {
             var palpites = palpiteRepository.findByPartida(partida);
@@ -54,6 +57,8 @@ public class PontuacaoService {
                 user.setSaldo(user.getSaldo() + pontos);
                 userRepository.save(user);
             }
+            rakingService.atualizarEnviarRaking(partida.getBolao().getId());
+
         }
     }
 
