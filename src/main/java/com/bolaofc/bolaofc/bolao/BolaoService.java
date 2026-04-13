@@ -28,4 +28,3 @@ public class BolaoService {
                 .orElseThrow(() -> new RuntimeException("Bolão não encontrado"));
     }
 }
-

@@ -29,15 +29,15 @@ public class PartidaService {
     public Partida atualizarResultado(UUID id,Integer golsCasa,Integer golsFora){
         Partida partida = partidaRepository.findById(id)
                 .orElseThrow(()-> new RuntimeException("Partida não encontrada"));
-            partida.setGolsCasa(golsCasa);
-            partida.setGolsFora(golsFora);
-            partida.setStatus(StatusPartida.FINALIZADA);
+        partida.setGolsCasa(golsCasa);
+        partida.setGolsFora(golsFora);
+        partida.setStatus(StatusPartida.FINALIZADA);
 
-            Partida partidaAtualizada = partidaRepository.save(partida);
+        Partida partidaAtualizada = partidaRepository.save(partida);
 
-            pontuacaoService.calcularPontuacao(partidaAtualizada);
+        pontuacaoService.calcularPontuacao(partidaAtualizada);
 
-            return partidaAtualizada;
+        return partidaAtualizada;
 
     }
 }

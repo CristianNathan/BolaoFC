@@ -20,8 +20,6 @@ public class Bolao {
     @JoinColumn(name = "dono_id")
     private User dono;
 
-
-
     public Bolao(){
 
     }
