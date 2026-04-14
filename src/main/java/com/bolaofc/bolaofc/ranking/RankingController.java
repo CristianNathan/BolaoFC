@@ -14,8 +14,5 @@ public class RankingController {
     @Autowired
     private RankingService rankingService;
 
-    @GetMapping("/{id}/ranking")
-    public List<Ranking> getRanking(@PathVariable UUID id) {
-        return rankingService.obterRankingDoBolao(id);
-    }
+
 }

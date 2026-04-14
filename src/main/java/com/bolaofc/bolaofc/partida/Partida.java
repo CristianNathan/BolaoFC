@@ -16,6 +16,9 @@ public class Partida {
     private String timeFora;
     private Integer golsCasa;
     private Integer golsFora;
+    private String liga;
+    private String escudoCasa;
+    private String escudoFora;
     @Enumerated(EnumType.STRING)
     private StatusPartida status;
     private LocalDateTime dataPartida;
@@ -101,4 +104,16 @@ public class Partida {
     public void setBolao(Bolao bolao) {
         this.bolao = bolao;
     }
+
+    public String getLiga() {
+        return liga;
+    }
+
+    public void setLiga(String liga) {
+        this.liga = liga;
+    }
+    public String getEscudoCasa() { return escudoCasa; }
+    public void setEscudoCasa(String escudoCasa) { this.escudoCasa = escudoCasa; }
+    public String getEscudoFora() { return escudoFora; }
+    public void setEscudoFora(String escudoFora) { this.escudoFora = escudoFora; }
 }

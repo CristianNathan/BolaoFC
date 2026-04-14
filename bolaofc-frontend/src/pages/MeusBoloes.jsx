@@ -1,210 +1,146 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import api from '../services/api'
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../services/api';
 
 export default function MeusBoloes() {
-  const [boloes, setBoloes] = useState([])
-  const [loading, setLoading] = useState(true)
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const [meusBoloes, setMeusBoloes] = useState([]); // Criados por mim ou participando
+  const [boloesPublicos, setBoloesPublicos] = useState([]); // Disponíveis para entrar
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    buscarMeusBoloes()
-  }, [])
-
-  async function buscarMeusBoloes() {
-    try {
-      const res = await api.get('/bolaos/meus')
-      setBoloes(res.data)
-    } catch (err) {
-      console.error("Erro ao carregar bolões", err)
-    } finally {
-      setLoading(false)
-    }
-  }
+    // Busca os dados do Back-end
+    Promise.all([
+      api.get('/api/bolao/meus'),
+      api.get('/api/bolao/publicos')
+    ])
+      .then(([resMeus, resPublicos]) => {
+        setMeusBoloes(resMeus.data);
+        setBoloesPublicos(resPublicos.data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Erro ao buscar bolões", err);
+        setLoading(false);
+      });
+  }, []);
 
   return (
-    <div style={s.container}>
-      <header style={s.header}>
-        <span style={s.logo} onClick={() => navigate('/home')}>
-          ⚽ BolãoFC
-        </span>
-
-        <button onClick={() => navigate('/home')} style={s.btnVoltar}>
-          Voltar aos Jogos
+    <div style={styles.container}>
+      <header style={styles.header}>
+        <button onClick={() => navigate('/home')} style={styles.backBtn}>
+          ← Voltar
         </button>
+        <h2>🏆 Meus Bolões</h2>
       </header>
 
-      <main style={s.main}>
-        <h1 style={s.title}>Meus Bolões</h1>
+      <main style={styles.main}>
+        <section>
+          <h3>Seus Grupos</h3>
+          <div style={styles.grid}>
+            {meusBoloes.length > 0 ? meusBoloes.map(b => (
+              <div key={b.id} style={styles.card}>
+                <h4>{b.nome}</h4>
+                <p>Código: <strong>{b.codigoConvite}</strong></p>
 
-        {loading ? (
-          <p>Carregando...</p>
-        ) : (
-          <div style={s.grid}>
-            {boloes.map((bolao) => (
-              <div key={bolao.id} style={s.card}>
-
-                <div>
-                  <h3 style={s.nome}>{bolao.nome}</h3>
-
-                  <span style={s.badge}>
-                    {bolao.publico ? '🌍 Público' : '🔒 Privado'}
-                  </span>
-
-                  <p style={s.codigo}>
-                    Código: <strong>{bolao.codigoConvite}</strong>
-                  </p>
-                </div>
-
-                <div style={s.regras}>
-                  <span>🎯 {bolao.pontosCheio} pts (Placar)</span>
-                  <span>🏆 {bolao.pontosVencedor} pts (Vitória)</span>
-                </div>
-
-                <div style={s.botoes}>
-
-                  <button
-                    style={s.btnRanking}
-                    onClick={() => navigate(`/ranking/${bolao.id}`)}
-                  >
-                    🏆 Abrir Bolão
-                  </button>
-
-                  <button
-                    style={s.btnPalpite}
-                    onClick={() => navigate(`/bolao/${bolao.id}`)}
-                  >
-                    ⚽ Fazer Palpite
-                  </button>
-
-                </div>
-
+                <button
+                  onClick={() => navigate(`/bolao/${b.id}`)}
+                  style={styles.btnAcessar}
+                >
+                  Detalhes
+                </button>
               </div>
-            ))}
-
-            {boloes.length === 0 && (
-              <p style={{ color: '#8b949e' }}>
+            )) : (
+              <p style={styles.empty}>
                 Você ainda não participa de nenhum bolão.
               </p>
             )}
           </div>
-        )}
+        </section>
+
+        <section style={{ marginTop: '40px' }}>
+          <h3>Explorar Bolões Públicos 🌍</h3>
+          <div style={styles.grid}>
+            {boloesPublicos.map(b => (
+              <div key={b.id} style={styles.cardPublico}>
+                <h4>{b.nome}</h4>
+                <p>{b.participantes} participantes</p>
+
+                <button style={styles.btnEntrar}>
+                  Entrar Agora
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
       </main>
     </div>
-  )
+  );
 }
 
-const s = {
+const styles = {
   container: {
     minHeight: '100vh',
-    background: '#0d1117',
+    background: '#0f2027',
     color: '#fff',
-    fontFamily: 'sans-serif'
+    padding: '20px'
   },
-
   header: {
-    padding: '20px 40px',
-    background: '#161b22',
     display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center'
+    alignItems: 'center',
+    gap: '20px',
+    marginBottom: '30px'
   },
-
-  logo: {
-    fontSize: 20,
-    fontWeight: 'bold',
+  backBtn: {
+    background: 'none',
+    border: 'none',
     color: '#00e676',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    fontWeight: 'bold'
   },
-
-  btnVoltar: {
-    background: 'transparent',
-    color: '#fff',
-    border: '1px solid #30363d',
-    padding: '8px 15px',
-    borderRadius: 6,
-    cursor: 'pointer'
-  },
-
   main: {
-    padding: '40px'
+    maxWidth: '1000px',
+    margin: '0 auto'
   },
-
-  title: {
-    marginBottom: '30px',
-    fontSize: 28
-  },
-
   grid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-    gap: '20px'
+    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+    gap: '15px'
   },
-
   card: {
-    background: '#161b22',
-    border: '1px solid #30363d',
-    borderRadius: 14,
-    padding: '22px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '18px',
-    boxShadow: '0 8px 20px rgba(0,0,0,0.4)'
+    background: 'rgba(255,255,255,0.05)',
+    padding: '20px',
+    borderRadius: '12px',
+    border: '1px solid #00e676'
   },
-
-  nome: {
-    margin: 0,
-    fontSize: 20
+  cardPublico: {
+    background: 'rgba(255,255,255,0.05)',
+    padding: '20px',
+    borderRadius: '12px',
+    border: '1px solid #aaa'
   },
-
-  badge: {
-    fontSize: 11,
-    background: '#21262d',
-    padding: '4px 10px',
-    borderRadius: 20,
-    color: '#8b949e',
-    display: 'inline-block',
-    marginTop: 8
-  },
-
-  codigo: {
-    fontSize: 13,
-    color: '#8b949e',
-    marginTop: 10
-  },
-
-  regras: {
-    display: 'flex',
-    gap: '12px',
-    fontSize: 13,
-    color: '#00e676'
-  },
-
-  botoes: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '10px'
-  },
-
-  btnRanking: {
-    background: '#30363d',
+  btnAcessar: {
+    width: '100%',
+    padding: '10px',
+    marginTop: '10px',
+    background: '#00e676',
     border: 'none',
-    padding: '12px',
-    borderRadius: 8,
-    color: '#fff',
-    fontWeight: 'bold',
+    borderRadius: '5px',
     cursor: 'pointer',
-    transition: '0.2s'
+    fontWeight: 'bold'
   },
-
-  btnPalpite: {
-    background: 'linear-gradient(135deg,#00e676,#00c853)',
+  btnEntrar: {
+    width: '100%',
+    padding: '10px',
+    marginTop: '10px',
+    background: '#fff',
     border: 'none',
-    padding: '12px',
-    borderRadius: 8,
-    color: '#000',
-    fontWeight: 'bold',
+    borderRadius: '5px',
     cursor: 'pointer',
-    transition: '0.2s'
+    fontWeight: 'bold'
+  },
+  empty: {
+    color: '#888',
+    fontSize: '14px'
   }
-}
+};

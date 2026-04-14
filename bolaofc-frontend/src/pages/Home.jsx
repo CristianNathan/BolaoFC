@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api'; 
 
 export default function Home() {
+  const navigate = useNavigate();
   const [codigoBolao, setCodigoBolao] = useState('');
   const [jogos, setJogos] = useState([]);
   const [abaAtiva, setAbaAtiva] = useState('PROXIMOS'); 
@@ -19,7 +21,6 @@ export default function Home() {
       });
   }, []);
 
-  // FUNÇÃO PARA TRADUZIR NOMES E ADICIONAR EMOJIS
   const formatarNomeCompeticao = (nome) => {
     const nomesAmigaveis = {
       'Primera Division': 'La Liga 🇪🇸',
@@ -33,16 +34,12 @@ export default function Home() {
     return nomesAmigaveis[nome] || nome;
   };
 
-  // FUNÇÃO PARA FORMATAR DATA E HORA
   const formatarDataJogo = (dataIso) => {
     const dataJogo = new Date(dataIso);
     const hoje = new Date();
-    
-    // Opções para formatar apenas o dia e mês
     const diaMes = dataJogo.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
     const hora = dataJogo.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-    // Verifica se o jogo é hoje
     if (dataJogo.toDateString() === hoje.toDateString()) {
       return `Hoje às ${hora}`;
     }
@@ -59,11 +56,32 @@ export default function Home() {
     return jogosProximos;
   };
 
+  const handleEntrarBolao = () => {
+    if(!codigoBolao) return alert("Digite um código!");
+    console.log("Tentando entrar no bolão:", codigoBolao);
+    // api.post('/api/bolao/entrar', { codigoConvite: codigoBolao }) ...
+  };
+
   return (
     <div style={styles.container}>
+      {/* HEADER COM A NOVA OPÇÃO */}
       <header style={styles.header}>
-        <div style={styles.logo}>⚽ Bolão ABC</div>
-        <button style={styles.logoutBtn} onClick={() => window.location.href = '/login'}>Sair</button>
+        <div style={styles.logo}>⚽ Bolão FC</div>
+        
+        <div style={styles.navActions}>
+          <button 
+            style={styles.meusBoloesBtn} 
+            onClick={() => navigate('/meus-boloes')}
+          >
+            🏆 Meus Bolões
+          </button>
+          <button 
+            style={styles.logoutBtn} 
+            onClick={() => navigate('/login')}
+          >
+            Sair
+          </button>
+        </div>
       </header>
 
       <main style={styles.main}>
@@ -87,7 +105,6 @@ export default function Home() {
           ) : getJogosExibidos().length > 0 ? (
             getJogosExibidos().map(jogo => (
               <div key={jogo.id} style={styles.gameCard}>
-                
                 <div style={styles.leagueBadge}>
                    {formatarNomeCompeticao(jogo.competition.name)}
                 </div>
@@ -100,13 +117,10 @@ export default function Home() {
                   
                   <div style={styles.scoreBoard}>
                     <div style={styles.scoreText}>
-                      {/* Mostra o placar se o jogo começou/terminou, senão mostra "VS" */}
-                      {jogo.status === 'TIMED' ? 'VS' : `${jogo.score.fullTime.home ?? 0} - ${jogo.score.fullTime.away ?? 0}`}
+                      {jogo.status === 'TIMED' || jogo.status === 'SCHEDULED' ? 'VS' : `${jogo.score.fullTime.home ?? 0} - ${jogo.score.fullTime.away ?? 0}`}
                     </div>
                     <div style={styles.timeBadge}>
-                      {jogo.status === 'IN_PLAY' 
-                        ? '🔴 AO VIVO' 
-                        : formatarDataJogo(jogo.utcDate)}
+                      {jogo.status === 'IN_PLAY' ? '🔴 AO VIVO' : formatarDataJogo(jogo.utcDate)}
                     </div>
                   </div>
 
@@ -126,18 +140,26 @@ export default function Home() {
           <div style={styles.actionCard}>
             <h3>Criar novo Bolão</h3>
             <p style={styles.cardSub}>Organize sua galera e defina as regras.</p>
-            <button style={styles.btnPrimary}>+ Novo Bolão</button>
+            <button 
+                style={styles.btnPrimary} 
+                onClick={() => navigate('/criar-bolao')}
+            >
+                + Novo Bolão
+            </button>
           </div>
 
           <div style={styles.actionCard}>
             <h3>Entrar em um Bolão</h3>
+            <p style={styles.cardSub}>Possui um código de convite?</p>
             <input 
               style={styles.input} 
               placeholder="Digite o código (ex: ABC-123)"
               value={codigoBolao}
               onChange={(e) => setCodigoBolao(e.target.value)}
             />
-            <button style={styles.btnSecondary}>Entrar no Grupo</button>
+            <button style={styles.btnSecondary} onClick={handleEntrarBolao}>
+                Entrar no Grupo
+            </button>
           </div>
         </section>
       </main>
@@ -147,9 +169,11 @@ export default function Home() {
 
 const styles = {
   container: { minHeight: '100vh', background: '#0f2027', color: '#fff', fontFamily: "'Segoe UI', sans-serif" },
-  header: { display: 'flex', justifyContent: 'space-between', padding: '20px 5%', background: 'rgba(0,0,0,0.3)', alignItems: 'center' },
-  logo: { fontSize: '24px', fontWeight: 'bold', color: '#00e676' },
-  logoutBtn: { background: 'transparent', border: '1px solid #ff5252', color: '#ff5252', borderRadius: '5px', padding: '5px 15px', cursor: 'pointer' },
+  header: { display: 'flex', justifyContent: 'space-between', padding: '15px 5%', background: 'rgba(0,0,0,0.4)', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)' },
+  logo: { fontSize: '22px', fontWeight: 'bold', color: '#00e676' },
+  navActions: { display: 'flex', gap: '15px', alignItems: 'center' },
+  meusBoloesBtn: { background: 'rgba(0, 230, 118, 0.1)', border: '1px solid #00e676', color: '#00e676', borderRadius: '8px', padding: '8px 15px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', transition: '0.3s' },
+  logoutBtn: { background: 'transparent', border: 'none', color: '#ff5252', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' },
   main: { maxWidth: '1000px', margin: '0 auto', padding: '40px 20px' },
   sectionTitle: { marginBottom: '20px', fontSize: '22px', fontWeight: 'bold' },
   tabs: { display: 'flex', gap: '10px', marginBottom: '25px' },

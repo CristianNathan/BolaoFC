@@ -2,132 +2,183 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
-const LIGAS_DISPONIVEIS = [
-  { id: 2013, nome: 'Brasileirão Série A 🇧🇷' }, { id: 2021, nome: 'Premier League 🏴' },
-  { id: 2014, nome: 'La Liga 🇪🇸' }, { id: 2019, nome: 'Serie A 🇮🇹' },
-  { id: 2002, nome: 'Bundesliga 🇩🇪' }, { id: 2015, nome: 'Ligue 1 🇫🇷' },
-  { id: 2001, nome: 'Champions League 🇪🇺' }, { id: 2000, nome: 'Copa do Mundo 🏆' },
-];
-
 export default function CriarBolao() {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+
   const [formData, setFormData] = useState({
     nome: '',
-    pontosCheio: 10,
+    pontosPlacarExato: 10,
     pontosVencedor: 5,
-    publico: true,
-    limiteParticipantes: 50,
-    dataEncerramento: '',
-    ligasIds: []
+    maxParticipantes: 50,
+    privado: true,
+    ligasPermitidas: []
   });
 
-  const handleToggleLiga = (id) => {
+  const ligasDisponiveis = [
+    { id: 'BSA', nome: 'Brasileirão', pais: '🇧🇷' },
+    { id: 'PL', nome: 'Premier League', pais: '🏴󠁧󠁢󠁥󠁮󠁧󠁿' },
+    { id: 'CL', nome: 'Champions League', pais: '🏆' },
+    { id: 'PD', nome: 'La Liga', pais: '🇪🇸' },
+    { id: 'SA', nome: 'Série A Tim', pais: '🇮🇹' },
+    { id: 'BL1', nome: 'Bundesliga', pais: '🇩🇪' },
+    { id: 'FL1', nome: 'Ligue 1', pais: '🇫🇷' }
+  ];
+
+  const handleLigaToggle = (id) => {
     setFormData(prev => ({
       ...prev,
-      ligasIds: prev.ligasIds.includes(id) 
-        ? prev.ligasIds.filter(l => l !== id) 
-        : [...prev.ligasIds, id]
+      ligasPermitidas: prev.ligasPermitidas.includes(id)
+        ? prev.ligasPermitidas.filter(l => l !== id)
+        : [...prev.ligasPermitidas, id]
     }));
+  };
+
+  // Função auxiliar para tratar a digitação de números e evitar o "04"
+  const handleNumberChange = (field, value) => {
+    const numValue = parseInt(value, 10);
+    setFormData({
+      ...formData,
+      [field]: isNaN(numValue) ? 0 : numValue
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (formData.ligasIds.length === 0) return alert("Selecione ao menos uma liga!");
+    if (formData.ligasPermitidas.length === 0) {
+      alert("Selecione pelo menos uma liga para o seu bolão!");
+      return;
+    }
+
+    setLoading(true);
     try {
-      await api.post('/bolaos', formData);
-      navigate('/meus-boloes');
+      await api.post('/api/bolao/criar', formData);
+      navigate('/meus-boloes'); 
     } catch (err) {
-      alert("Erro ao criar bolão");
+      console.error(err);
+      alert("Erro ao criar bolão. Verifique os dados ou sua conexão.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div style={styles.container}>
-      <h1 style={styles.title}>🏆 Configurar Novo Bolão</h1>
-      
-      <form onSubmit={handleSubmit} style={styles.form}>
-        {/* NOME */}
-        <div style={styles.section}>
-          <label style={styles.label}>Nome do Bolão</label>
-          <input 
-            style={styles.input} 
-            placeholder="Ex: Bolão dos Amigos"
-            onChange={e => setFormData({...formData, nome: e.target.value})}
-            required
-          />
-        </div>
+      <div style={styles.card}>
+        <button onClick={() => navigate('/home')} style={styles.backBtn}>← Voltar para Home</button>
+        
+        <h2 style={styles.title}>Configurar Novo Bolão</h2>
+        <p style={styles.subtitle}>Defina as regras e a privacidade do seu grupo</p>
 
-        {/* REGRAS DE PONTOS */}
-        <div style={styles.section}>
-          <label style={styles.label}>Regras de Pontuação</label>
-          <div style={styles.row}>
-            <div style={{flex: 1}}>
-              <span style={styles.subLabel}>Placar Exato</span>
-              <input type="number" style={styles.input} value={formData.pontosCheio} 
-                onChange={e => setFormData({...formData, pontosCheio: e.target.value})} />
-            </div>
-            <div style={{flex: 1}}>
-              <span style={styles.subLabel}>Apenas Vencedor</span>
-              <input type="number" style={styles.input} value={formData.pontosVencedor} 
-                onChange={e => setFormData({...formData, pontosVencedor: e.target.value})} />
-            </div>
+        <form onSubmit={handleSubmit}>
+          {/* NOME DO BOLÃO */}
+          <div style={styles.section}>
+            <label style={styles.label}>Nome do Grupo</label>
+            <input 
+              required
+              style={styles.input}
+              placeholder="Ex: Bolão dos Amigos"
+              value={formData.nome}
+              onChange={e => setFormData({...formData, nome: e.target.value})}
+            />
           </div>
-        </div>
 
-        {/* CONFIGURAÇÕES DE ACESSO */}
-        <div style={styles.section}>
-          <div style={styles.row}>
-            <div style={{flex: 1}}>
-              <label style={styles.label}>Privacidade</label>
-              <select style={styles.input} onChange={e => setFormData({...formData, publico: e.target.value === 'true'})}>
-                <option value="true">Público (Todos veem)</option>
-                <option value="false">Privado (Só com código)</option>
-              </select>
-            </div>
-            <div style={{flex: 1}}>
-              <label style={styles.label}>Limite de Pessoas</label>
-              <input type="number" style={styles.input} value={formData.limiteParticipantes} 
-                onChange={e => setFormData({...formData, limiteParticipantes: e.target.value})} />
-            </div>
+          {/* MÁXIMO DE PARTICIPANTES */}
+          <div style={styles.section}>
+            <label style={styles.label}>Máximo de Participantes</label>
+            <input 
+              type="number"
+              style={styles.input}
+              placeholder="Ex: 50"
+              value={formData.maxParticipantes === 0 ? '' : formData.maxParticipantes}
+              onChange={e => handleNumberChange('maxParticipantes', e.target.value)}
+            />
+            <p style={styles.infoText}>Limite de pessoas no grupo.</p>
           </div>
-        </div>
 
-        {/* CAMPEONATOS */}
-        <div style={styles.section}>
-          <label style={styles.label}>Escolha os Campeonatos</label>
-          <div style={styles.gridLigas}>
-            {LIGAS_DISPONIVEIS.map(liga => (
-              <button
-                key={liga.id} type="button"
-                onClick={() => handleToggleLiga(liga.id)}
-                style={{
-                  ...styles.ligaBtn,
-                  backgroundColor: formData.ligasIds.includes(liga.id) ? '#00e676' : '#21262d',
-                  color: formData.ligasIds.includes(liga.id) ? '#0d1117' : '#fff'
-                }}
+          {/* PRIVACIDADE */}
+          <div style={styles.section}>
+            <label style={styles.label}>Privacidade</label>
+            <div style={styles.row}>
+              <button 
+                type="button"
+                onClick={() => setFormData({...formData, privado: true})}
+                style={formData.privado ? styles.ligaActive : styles.liga}
               >
-                {liga.nome}
+                🔒 Privado
               </button>
-            ))}
+              <button 
+                type="button"
+                onClick={() => setFormData({...formData, privado: false})}
+                style={!formData.privado ? styles.ligaActive : styles.liga}
+              >
+                🌍 Público
+              </button>
+            </div>
           </div>
-        </div>
 
-        <button type="submit" style={styles.btnCriar}>LANÇAR BOLÃO</button>
-      </form>
+          {/* REGRAS DE PONTOS */}
+          <div style={styles.row}>
+            <div style={styles.inputGroup}>
+              <label style={styles.label}>Placar Exato</label>
+              <input 
+                type="number"
+                style={styles.input}
+                value={formData.pontosPlacarExato === 0 ? '' : formData.pontosPlacarExato}
+                onChange={e => handleNumberChange('pontosPlacarExato', e.target.value)}
+              />
+            </div>
+            <div style={styles.inputGroup}>
+              <label style={styles.label}>Acertar Vencedor</label>
+              <input 
+                type="number"
+                style={styles.input}
+                value={formData.pontosVencedor === 0 ? '' : formData.pontosVencedor}
+                onChange={e => handleNumberChange('pontosVencedor', e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* SELEÇÃO DE LIGAS */}
+          <div style={styles.section}>
+            <label style={styles.label}>Ligas Permitidas</label>
+            <div style={styles.grid}>
+              {ligasDisponiveis.map(liga => (
+                <div 
+                  key={liga.id}
+                  onClick={() => handleLigaToggle(liga.id)}
+                  style={formData.ligasPermitidas.includes(liga.id) ? styles.ligaActive : styles.liga}
+                >
+                  <span style={{fontSize: '18px'}}>{liga.pais}</span>
+                  <span style={{fontSize: '12px'}}>{liga.nome}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <button type="submit" disabled={loading} style={styles.btnSubmit}>
+            {loading ? 'Criando Bolão...' : 'GERAR MEU BOLÃO'}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
 
 const styles = {
-  container: { padding: '40px', backgroundColor: '#0d1117', minHeight: '100vh', color: '#fff', fontFamily: 'sans-serif' },
-  title: { fontSize: '32px', marginBottom: '30px', color: '#00e676', fontWeight: 'bold' },
-  form: { display: 'flex', flexDirection: 'column', gap: '25px', maxWidth: '600px' },
-  section: { display: 'flex', flexDirection: 'column', gap: '10px' },
-  label: { fontSize: '16px', fontWeight: 'bold', color: '#8b949e' },
-  subLabel: { fontSize: '12px', color: '#8b949e', display: 'block', marginBottom: '5px' },
-  row: { display: 'flex', gap: '20px' },
-  input: { padding: '12px', borderRadius: '8px', border: '1px solid #30363d', backgroundColor: '#161b22', color: '#fff', width: '100%', boxSizing: 'border-box' },
-  gridLigas: { display: 'flex', flexWrap: 'wrap', gap: '10px' },
-  ligaBtn: { padding: '10px 15px', borderRadius: '20px', border: 'none', cursor: 'pointer', fontWeight: 'bold', transition: '0.2s' },
-  btnCriar: { padding: '18px', borderRadius: '8px', border: 'none', backgroundColor: '#238636', color: '#fff', fontWeight: 'bold', cursor: 'pointer', fontSize: '16px', marginTop: '10px' }
+  container: { minHeight: '100vh', background: '#0f2027', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' },
+  card: { background: '#1a2a33', padding: '35px', borderRadius: '20px', width: '100%', maxWidth: '500px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' },
+  backBtn: { background: 'none', border: 'none', color: '#00e676', cursor: 'pointer', marginBottom: '15px', padding: 0, fontWeight: 'bold' },
+  title: { color: '#00e676', margin: '0 0 5px 0', fontSize: '24px' },
+  subtitle: { color: '#aaa', fontSize: '13px', marginBottom: '25px' },
+  section: { marginBottom: '20px' },
+  label: { display: 'block', color: '#fff', fontSize: '13px', marginBottom: '8px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' },
+  input: { width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #333', background: '#0f2027', color: '#fff', outline: 'none', boxSizing: 'border-box' },
+  row: { display: 'flex', gap: '10px', marginBottom: '10px' },
+  inputGroup: { flex: 1 },
+  grid: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' },
+  liga: { padding: '10px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid #333', color: '#fff', cursor: 'pointer', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '3px', transition: '0.2s', flex: 1 },
+  ligaActive: { padding: '10px', borderRadius: '8px', background: '#00e676', border: '1px solid #00e676', color: '#000', cursor: 'pointer', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '3px', fontWeight: 'bold', transition: '0.2s', flex: 1 },
+  infoText: { fontSize: '11px', color: '#888', marginTop: '5px' },
+  btnSubmit: { width: '100%', padding: '16px', marginTop: '10px', borderRadius: '10px', border: 'none', background: '#00e676', color: '#000', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', boxShadow: '0 4px 15px rgba(0,230,118,0.3)' }
 };

@@ -1,5 +1,7 @@
 package com.bolaofc.bolaofc.palpite;
 
+import com.bolaofc.bolaofc.bolao.Bolao;
+import com.bolaofc.bolaofc.bolao.BolaoRepository;
 import com.bolaofc.bolaofc.partida.Partida;
 import com.bolaofc.bolaofc.partida.PartidaRepository;
 import com.bolaofc.bolaofc.transacao.Tipo;
@@ -10,54 +12,59 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class PalpiteService {
     private final PalpiteRepository palpiteRepository;
     private final PartidaRepository partidaRepository;
+    private final BolaoRepository bolaoRepository;
     private final TransacaoService transacaoService;
 
     public PalpiteService(PalpiteRepository palpiteRepository,
                           PartidaRepository partidaRepository,
+                          BolaoRepository bolaoRepository,
                           TransacaoService transacaoService) {
         this.palpiteRepository = palpiteRepository;
         this.partidaRepository = partidaRepository;
+        this.bolaoRepository = bolaoRepository;
         this.transacaoService = transacaoService;
     }
 
     @Transactional
-    public Palpite fazerPalpite(Palpite palpite, User user) {
-        Partida partida = partidaRepository.findById(palpite.getPartida().getId())
-                .orElseThrow(() -> new RuntimeException("Partida não encontrada com o ID: " + palpite.getPartida().getId()));
+    public Palpite fazerPalpite(PalpiteRequestDTO data, User user) {
+        Partida partida = partidaRepository.findById(data.jogoId())
+                .orElseThrow(() -> new RuntimeException("Partida não encontrada"));
 
-        palpite.setPartida(partida);
+        Bolao bolao = bolaoRepository.findById(data.bolaoId())
+                .orElseThrow(() -> new RuntimeException("Bolão não encontrado"));
 
-        Optional<Palpite> palpiteExistente = palpiteRepository.findByUserAndPartida(user, partida);
-        if (palpiteExistente.isPresent()) {
-            throw new RuntimeException("Você já registrou um palpite para esta partida.");
+        // Validação de status
+        String status = partida.getStatus().toString();
+        if (!status.equals("AGENDADA") && !status.equals("TIMED")) {
+            throw new IllegalStateException("A partida já iniciou.");
         }
 
-        if (!partida.getStatus().name().equals("AGENDADA")) {
-            throw new IllegalStateException("A partida já iniciou ou foi finalizada.");
+        Optional<Palpite> palpiteExistente = palpiteRepository.findByUserAndPartidaAndBolao(user, partida, bolao);
+
+        Palpite palpite = palpiteExistente.orElse(new Palpite());
+
+        if (palpite.getId() == null) {
+            palpite.setUser(user);
+            palpite.setPartida(partida);
+            palpite.setBolao(bolao);
+
+            transacaoService.registrarTransacao(user, 10.0, Tipo.DEBITO, "Palpite no Bolão: " + bolao.getNome());
         }
 
-        palpite.setUser(user);
+        palpite.setPalpiteCasa(data.golsMandante());
+        palpite.setPalpiteFora(data.golsVisitante());
         palpite.setStatus(PalpitesStatus.PENDENTE);
         palpite.setPontosGanhos(0);
 
-        Palpite palpiteSalvo = palpiteRepository.save(palpite);
-
-        transacaoService.registrarTransacao(
-                user,
-                10.0,
-                Tipo.DEBITO,
-                "Aposta: " + partida.getTimeCasa() + " x " + partida.getTimeFora()
-        );
-
-        return palpiteSalvo;
+        return palpiteRepository.save(palpite);
     }
-
-    public List<Palpite> buscarPalpitesPorPartida(Partida partida) {
-        return palpiteRepository.findByPartida(partida);
+    public List<Palpite> buscarPorUsuario(User user) {
+        return palpiteRepository.findByUser(user);
     }
 }

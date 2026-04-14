@@ -9,7 +9,7 @@ import java.util.UUID;
 @Entity
 public class Ranking {
     @Id
-    @GeneratedValue(strategy =  GenerationType.IDENTITY)
+    @GeneratedValue(strategy =  GenerationType.AUTO)
     private UUID id;
     @ManyToOne
     private Bolao bolao;

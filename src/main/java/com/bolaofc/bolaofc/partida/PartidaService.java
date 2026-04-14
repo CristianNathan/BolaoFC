@@ -1,6 +1,7 @@
 package com.bolaofc.bolaofc.partida;
 
 import com.bolaofc.bolaofc.bolao.Bolao;
+import com.bolaofc.bolaofc.bolao.BolaoRepository;
 import com.bolaofc.bolaofc.pontuacao.PontuacaoService;
 import com.bolaofc.bolaofc.transacao.TransacaoService;
 import org.springframework.stereotype.Service;
@@ -12,10 +13,12 @@ import java.util.UUID;
 public class PartidaService {
     private final PartidaRepository partidaRepository;
     private final PontuacaoService pontuacaoService;
+    private final BolaoRepository bolaoRepository;
 
-    public PartidaService(PartidaRepository partidaRepository, PontuacaoService pontuacaoService, TransacaoService transacaoService) {
+    public PartidaService(PartidaRepository partidaRepository, PontuacaoService pontuacaoService, TransacaoService transacaoService, BolaoRepository bolaoRepository) {
         this.partidaRepository = partidaRepository;
         this.pontuacaoService = pontuacaoService;
+        this.bolaoRepository = bolaoRepository;
     }
     public Partida criarPartida(Partida partida){
         return partidaRepository.save(partida);
@@ -39,5 +42,14 @@ public class PartidaService {
 
         return partidaAtualizada;
 
+    }
+    public List<Partida> buscarPartidasDoBolao(UUID bolaoId) {
+        Bolao bolao = bolaoRepository.findById(bolaoId)
+                .orElseThrow(() -> new RuntimeException("Bolão não encontrado"));
+
+        // Supondo que seu Bolão tem uma lista de códigos de ligas (ex: "BSA", "PL")
+        List<String> codigosLigas = bolao.getLigasPermitidas();
+
+        return partidaRepository.findByLigaInAndStatus(codigosLigas, StatusPartida.AGENDADA);
     }
 }

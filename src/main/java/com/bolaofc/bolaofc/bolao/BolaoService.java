@@ -2,29 +2,65 @@ package com.bolaofc.bolaofc.bolao;
 
 import com.bolaofc.bolaofc.user.User;
 import org.springframework.stereotype.Service;
-
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional; // Adicione este import
 import java.util.UUID;
 
 @Service
 public class BolaoService {
-    private final BolaoRepository bolaoRepository;
 
-    public BolaoService(BolaoRepository bolaoRepository) {
+    private final BolaoRepository bolaoRepository;
+    private final BolaoParticipanteRepository participanteRepository;
+
+    public BolaoService(BolaoRepository bolaoRepository, BolaoParticipanteRepository participanteRepository) {
         this.bolaoRepository = bolaoRepository;
+        this.participanteRepository = participanteRepository;
     }
-    public Bolao criarBolao(Bolao bolao, User user){
+
+    @Transactional
+    public Bolao criarBolao(BolaoRequestDTO dados, User user){
+        Bolao bolao = new Bolao();
+        bolao.setNome(dados.nome());
+        bolao.setPontosPlacarExato(dados.pontosPlacarExato());
+        bolao.setPontosVencedor(dados.pontosVencedor());
+        bolao.setPrivado(dados.privado());
+        bolao.setLigasPermitidas(dados.ligasPermitidas());
         bolao.setDono(user);
-        bolao.setCodigoConvite(UUID.randomUUID().toString().substring(0, 8));
+        bolao.setCodigoConvite(UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         bolao.setCriadoEm(LocalDateTime.now());
         bolao.setStatus(Status.ABERTO);
-        return bolaoRepository.save(bolao);
+
+        Bolao bolaoSalvo = bolaoRepository.save(bolao);
+
+        BolaoParticipante participante = new BolaoParticipante();
+        participante.setUser(user);
+        participante.setBolao(bolaoSalvo);
+        participante.setPontosTotal(0L);
+        participanteRepository.save(participante);
+
+        return bolaoSalvo;
     }
+
     public Bolao entrarNoBolao(String codigoConvite){
         return bolaoRepository.findByCodigoConvite(codigoConvite);
     }
-    public Bolao buscarPorId(UUID id){
-        return bolaoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Bolão não encontrado"));
+
+    public List<Bolao> listarBoloesDoUsuario(UUID userId) {
+        List<BolaoParticipante> participacoes = participanteRepository.findByUserId(userId);
+        return participacoes.stream()
+                .map(BolaoParticipante::getBolao)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Bolao> listarBoloesPublicos() {
+        return bolaoRepository.findByPrivadoFalse();
+    }
+
+    // AQUI ESTÁ O AJUSTE: Retornando Optional para o Controller conseguir usar o .map()
+    public Optional<Bolao> buscarPorId(UUID id){
+        return bolaoRepository.findById(id);
     }
 }
