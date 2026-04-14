@@ -7,7 +7,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import java.time.LocalDate; // Importante para as datas
+import java.time.LocalDate;
 
 @Service
 public class FootballApiService {
@@ -24,12 +24,10 @@ public class FootballApiService {
 
     public String buscarPartidas() {
         String ontem = LocalDate.now().minusDays(1).toString();
-        String amanha = LocalDate.now().plusDays(2).toString(); // Aumentei um dia pra garantir o próximo fim de semana
+        String amanha = LocalDate.now().plusDays(2).toString();
 
-        // Códigos das ligas que você quer:
         String ligas = "BSA,CL,PL,PD,BL1,SA,FL1";
 
-        // Montamos a URL com datas E as competições escolhidas
         String urlPartidas = String.format(
                 "%s/matches?dateFrom=%s&dateTo=%s&competitions=%s",
                 apiUrl, ontem, amanha, ligas

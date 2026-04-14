@@ -56,7 +56,6 @@ public class BolaoController {
         return ResponseEntity.ok(publicos);
     }
 
-    // MÉTODO QUE ESTAVA FALTANDO E DANDO ERRO 404
     @GetMapping("/{id}")
     public ResponseEntity<Bolao> buscarPorId(@PathVariable UUID id) {
         Optional<Bolao> bolaoOptional = bolaoService.buscarPorId(id);

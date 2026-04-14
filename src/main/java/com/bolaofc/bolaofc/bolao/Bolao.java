@@ -18,11 +18,11 @@ public class Bolao {
     @Column(unique = true)
     private String codigoConvite;
 
-    private Integer pontosPlacarExato; // Ex: 10
-    private Integer pontosVencedor;    // Ex: 5
+    private Integer pontosPlacarExato;
+    private Integer pontosVencedor;
 
     private Integer maxParticipantes;
-    private Boolean privado; // true = precisa de código, false = público
+    private Boolean privado;
 
     @ElementCollection
     private List<String> ligasPermitidas;

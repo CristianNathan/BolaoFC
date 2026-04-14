@@ -28,7 +28,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(csrf -> csrf.disable())
-                .cors(Customizer.withDefaults()) // Vai usar o bean corsConfigurationSource abaixo
+                .cors(Customizer.withDefaults())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(req -> {
                     req.requestMatchers(HttpMethod.POST, "/auth/login").permitAll();

@@ -33,11 +33,9 @@ public class Palpite {
     @JoinColumn(name = "bolao_id")
     private Bolao bolao;
 
-    // Construtor Padrão (Obrigatório para o JPA)
     public Palpite() {
     }
 
-    // Construtor Completo
     public Palpite(UUID id, Integer palpiteCasa, Integer palpiteFora, Integer pontosGanhos,
                    PalpitesStatus status, User user, Partida partida, Bolao bolao) {
         this.id = id;

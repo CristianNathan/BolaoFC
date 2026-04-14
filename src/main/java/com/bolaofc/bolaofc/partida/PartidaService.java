@@ -47,7 +47,6 @@ public class PartidaService {
         Bolao bolao = bolaoRepository.findById(bolaoId)
                 .orElseThrow(() -> new RuntimeException("Bolão não encontrado"));
 
-        // Supondo que seu Bolão tem uma lista de códigos de ligas (ex: "BSA", "PL")
         List<String> codigosLigas = bolao.getLigasPermitidas();
 
         return partidaRepository.findByLigaInAndStatus(codigosLigas, StatusPartida.AGENDADA);

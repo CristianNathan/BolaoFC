@@ -45,7 +45,6 @@ public class SchedulerService {
                 String escudoCasa = match.get("homeTeam").get("crest").asText();
                 String escudoFora = match.get("awayTeam").get("crest").asText();
 
-                // Evita duplicatas
                 if (partidaRepository.findByTimeCasaAndTimeFora(timeCasa, timeFora).isPresent()) {
                     continue;
                 }

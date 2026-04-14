@@ -61,7 +61,7 @@ public class AuthController {
             User user = userService.buscarPorEmail(email);
             if (user == null) return ResponseEntity.status(401).body("Usuário não encontrado");
 
-            // Validação manual para o LOG
+
             boolean matches = passwordEncoder.matches(senhaDigitada, user.getSenha());
             System.out.println("A senha bate no manual? " + matches);
 

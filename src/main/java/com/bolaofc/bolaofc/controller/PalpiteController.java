@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/palpites") // Define a rota base
-@CrossOrigin(origins = "*")      // Libera o Front-end
+@RequestMapping("/api/palpites")
+@CrossOrigin(origins = "*")
 public class PalpiteController {
 
     private final PalpiteService palpiteService;
@@ -23,11 +23,8 @@ public class PalpiteController {
 
     @PostMapping("/salvar")
     public ResponseEntity<Palpite> salvarPalpite(@RequestBody PalpiteRequestDTO data) {
-        // Pega o usuário logado pelo Token (SecurityContext)
         User usuarioLogado = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        // No seu Service, agora você passa os dados do DTO e o usuário
-        // Recomendo que o service busque o Bolão pelo bolaoId antes de salvar
         Palpite novoPalpite = palpiteService.fazerPalpite(data, usuarioLogado);
 
         return ResponseEntity.ok(novoPalpite);

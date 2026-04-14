@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional; // Adicione este import
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -59,7 +59,6 @@ public class BolaoService {
         return bolaoRepository.findByPrivadoFalse();
     }
 
-    // AQUI ESTÁ O AJUSTE: Retornando Optional para o Controller conseguir usar o .map()
     public Optional<Bolao> buscarPorId(UUID id){
         return bolaoRepository.findById(id);
     }

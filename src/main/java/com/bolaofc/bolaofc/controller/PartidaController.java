@@ -10,7 +10,6 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/partidas")
-// Removi o BolaoService daqui para deixar a responsabilidade de busca no PartidaService
 public class PartidaController {
 
     private final PartidaService partidaService;

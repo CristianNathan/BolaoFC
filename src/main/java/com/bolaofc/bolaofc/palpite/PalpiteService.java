@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 public class PalpiteService {
@@ -39,7 +38,6 @@ public class PalpiteService {
         Bolao bolao = bolaoRepository.findById(data.bolaoId())
                 .orElseThrow(() -> new RuntimeException("Bolão não encontrado"));
 
-        // Validação de status
         String status = partida.getStatus().toString();
         if (!status.equals("AGENDADA") && !status.equals("TIMED")) {
             throw new IllegalStateException("A partida já iniciou.");

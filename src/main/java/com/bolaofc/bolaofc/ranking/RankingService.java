@@ -35,7 +35,6 @@ public class RankingService {
                 .toList();
 
         for (var participante : participantes) {
-            // Chamada corrigida para bater com o Repository
             List<Palpite> palpitesDoUsuario = palpiteRepository.findByUserAndBolaoId(participante.getUser(), bolaoId);
 
             long somaPontos = palpitesDoUsuario.stream()

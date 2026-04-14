@@ -10,7 +10,7 @@ import java.util.UUID;
 @Repository
 public interface BolaoParticipanteRepository extends JpaRepository<BolaoParticipante, UUID> {
 
-    // Adicione esse aqui para aceitar o UUID que vem do Controller
+
     List<BolaoParticipante> findByUserId(UUID userId);
 
     List<BolaoParticipante> findByUser(User user);
