@@ -13,7 +13,13 @@ public class UserService {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
-    public User salvar(User user){
+    public User salvar(User user) {
+        if (userRepository.existsByNickname(user.getNickname())) {
+            throw new RuntimeException("Nickname já está em uso.");
+        }
+        if (!user.getNickname().matches("^[a-zA-Z0-9_]{3,20}$")) {
+            throw new RuntimeException("Nickname inválido. Use só letras, números e _ (3 a 20 caracteres).");
+        }
         user.setSenha(passwordEncoder.encode(user.getSenha()));
         return userRepository.save(user);
     }
@@ -23,5 +29,10 @@ public class UserService {
     public List<User> listarTodos(){
         return  userRepository.findAll();
     }
+    public boolean existePorNickname(String nickname) {
+        return userRepository.existsByNickname(nickname);
+    }
+
 
 }
+

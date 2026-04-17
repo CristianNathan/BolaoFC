@@ -4,8 +4,10 @@ import Register from './pages/Register';
 import Home from './pages/Home';
 import CriarBolao from './pages/CriarBolao'; 
 import MeusBoloes from './pages/MeusBoloes';
-import DetalhesBolao from './pages/DetalhesBolao'; // <-- Crie este arquivo em /pages
+import DetalhesBolao from './pages/DetalhesBolao'; 
 import MeusPalpites from './pages/MeusPalpites';
+import AcertosBolao from './pages/AcertosBolao';
+
 function App() {
   return (
     <Router>
@@ -16,9 +18,9 @@ function App() {
         <Route path="/home" element={<Home />} />
         <Route path="/criar-bolao" element={<CriarBolao />} /> 
         <Route path="/meus-boloes" element={<MeusBoloes/>} />
-        {/* NOVA ROTA DINÂMICA */}
         <Route path="/bolao/:id" element={<DetalhesBolao />} />
         <Route path="/meus-palpites" element={<MeusPalpites />} />
+        <Route path="/acertos" element={<AcertosBolao/>} />
       </Routes>
     </Router>
   );

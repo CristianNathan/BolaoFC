@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import api from '../services/api'
 
 export default function Register() {
-  const [nome, setNome] = useState('')
+  const [nickname, setNickname] = useState('')
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [confirmarSenha, setConfirmarSenha] = useState('')
@@ -20,9 +20,14 @@ export default function Register() {
       return
     }
 
+    if (!/^[a-zA-Z0-9_]{3,20}$/.test(nickname)) {
+      setErro('Nickname inválido. Use só letras, números e _ (3 a 20 caracteres).')
+      return
+    }
+
     setLoading(true)
     try {
-      await api.post('/auth/register', { nome, email, senha })
+      await api.post('/auth/register', { nickname, email, senha })
       navigate('/login')
     } catch (err) {
       const msg = err?.response?.data?.message
@@ -40,15 +45,16 @@ export default function Register() {
         <p style={styles.sub}>Entre no jogo. Dispute com os melhores.</p>
 
         <form onSubmit={handleRegister} style={styles.form}>
-          <label style={styles.label}>Nome</label>
+          <label style={styles.label}>Nickname</label>
           <input
             style={styles.input}
             type="text"
-            placeholder="Seu nome"
-            value={nome}
-            onChange={e => setNome(e.target.value)}
+            placeholder="ex: matheus_07"
+            value={nickname}
+            onChange={e => setNickname(e.target.value)}
             required
           />
+          <p style={styles.hint}>Só letras, números e _ (3 a 20 caracteres)</p>
 
           <label style={styles.label}>Email</label>
           <input
@@ -144,6 +150,11 @@ const styles = {
     fontSize: '13px',
     color: 'rgba(255,255,255,0.7)',
     marginTop: '8px',
+  },
+  hint: {
+    fontSize: '11px',
+    color: 'rgba(255,255,255,0.3)',
+    margin: '2px 0 0',
   },
   input: {
     background: 'rgba(255,255,255,0.08)',

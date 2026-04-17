@@ -11,15 +11,33 @@ export default function DetalhesBolao() {
   const [partidas, setPartidas] = useState([]);
   const [meusPalpites, setMeusPalpites] = useState({});
   const [confirmados, setConfirmados] = useState({});
+  const [ranking, setRanking] = useState([]);
+  const [loadingRanking, setLoadingRanking] = useState(false);
 
   useEffect(() => {
     async function carregarDados() {
       try {
         setLoading(true);
-        const resBolao = await api.get(`/api/bolao/${id}`);
+        const [resBolao, resPartidas, resPalpites] = await Promise.all([
+          api.get(`/api/bolao/${id}`),
+          api.get(`/api/partidas/bolao/${id}`),
+          api.get('/api/palpites/meus'),
+        ]);
+
         setBolao(resBolao.data);
-        const resPartidas = await api.get(`/api/partidas/bolao/${id}`);
         setPartidas(resPartidas.data);
+
+        const palpitesFeitos = {};
+        resPalpites.data.forEach(p => {
+          if (p.bolao?.id === id) {
+            palpitesFeitos[p.partida.id] = {
+              casa: p.palpiteCasa,
+              fora: p.palpiteFora,
+            };
+          }
+        });
+        setConfirmados(palpitesFeitos);
+
       } catch (err) {
         console.error("Erro ao carregar dados:", err);
       } finally {
@@ -28,6 +46,16 @@ export default function DetalhesBolao() {
     }
     if (id) carregarDados();
   }, [id]);
+
+  useEffect(() => {
+    if (abaAtiva === 'RANKING' && id) {
+      setLoadingRanking(true);
+      api.get(`/bolaos/${id}/ranking`)
+        .then(res => setRanking(res.data))
+        .catch(err => console.error("Erro ao carregar ranking:", err))
+        .finally(() => setLoadingRanking(false));
+    }
+  }, [abaAtiva, id]);
 
   const handleInputPalpite = (partidaId, campo, valor) => {
     setMeusPalpites(prev => ({
@@ -40,6 +68,8 @@ export default function DetalhesBolao() {
   };
 
   const salvarPalpite = (partidaId) => {
+    if (confirmados[partidaId]) return;
+
     const palpite = meusPalpites[partidaId];
     if (!palpite || palpite.golsCasa === undefined || palpite.golsFora === undefined ||
         palpite.golsCasa === "" || palpite.golsFora === "") {
@@ -52,7 +82,10 @@ export default function DetalhesBolao() {
       golsMandante: palpite.golsCasa,
       golsVisitante: palpite.golsFora
     })
-      .then(() => setConfirmados(prev => ({ ...prev, [partidaId]: true })))
+      .then(() => setConfirmados(prev => ({
+        ...prev,
+        [partidaId]: { casa: palpite.golsCasa, fora: palpite.golsFora }
+      })))
       .catch(err => alert("Erro ao salvar: " + (err.response?.data || "Erro de conexão")));
   };
 
@@ -76,11 +109,24 @@ export default function DetalhesBolao() {
 
   const formatarData = (dataStr) => {
     if (!dataStr) return '—';
-    const data = new Date(dataStr);
+    const dataUtc = dataStr.endsWith('Z') ? dataStr : dataStr + 'Z';
+    const data = new Date(dataUtc);
     const hoje = new Date();
-    const hora = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    if (data.toDateString() === hoje.toDateString()) return `Hoje às ${hora}`;
-    return data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ` às ${hora}`;
+    const hora = data.toLocaleTimeString('pt-BR', {
+      hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo'
+    });
+    const mesmaData = data.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }) ===
+                      hoje.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    if (mesmaData) return `Hoje às ${hora}`;
+    const dataBr = data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'America/Sao_Paulo' });
+    return `${dataBr} às ${hora}`;
+  };
+
+  const getMedalha = (pos) => {
+    if (pos === 0) return '🥇';
+    if (pos === 1) return '🥈';
+    if (pos === 2) return '🥉';
+    return `${pos + 1}º`;
   };
 
   if (loading) return (
@@ -106,11 +152,9 @@ export default function DetalhesBolao() {
         </div>
 
         <div style={s.headerRight}>
-          {/* Botão meus palpites */}
           <button onClick={() => navigate('/meus-palpites')} style={s.meusPalpitesBtn}>
             📋 Meus Palpites
           </button>
-          {/* Código de convite */}
           <div style={s.inviteBox}>
             <span style={s.inviteLabel}>Código de convite</span>
             <div style={s.inviteRow}>
@@ -139,69 +183,88 @@ export default function DetalhesBolao() {
             {partidas.length === 0 ? (
               <div style={s.emptyCard}>Nenhum jogo disponível para estas ligas.</div>
             ) : (
-              partidas.map(jogo => (
-                <div key={jogo.id} style={s.gameCard}>
+              partidas.map(jogo => {
+                const jaConfirmado = !!confirmados[jogo.id];
+                const palpiteFeito = confirmados[jogo.id];
 
-                  <div style={s.leagueBadge}>
-                    {formatarNomeLiga(jogo.liga)}
-                  </div>
+                return (
+                  <div key={jogo.id} style={s.gameCard}>
+                    <div style={s.leagueBadge}>{formatarNomeLiga(jogo.liga)}</div>
 
-                  <div style={s.matchContent}>
-                    {/* Time da casa */}
-                    <div style={s.teamInfo}>
-                      {jogo.escudoCasa
-                        ? <img src={jogo.escudoCasa} alt={jogo.timeCasa} style={s.crest} />
-                        : <div style={s.crestFallback}>{jogo.timeCasa?.substring(0, 3).toUpperCase()}</div>
-                      }
-                      <span style={s.teamName}>{jogo.timeCasa}</span>
-                    </div>
-
-                    {/* Centro */}
-                    <div style={s.scoreBoard}>
-                      <div style={s.inputsRow}>
-                        <input
-                          type="number" min="0" max="20" placeholder="0"
-                          style={s.scoreInput}
-                          onChange={e => handleInputPalpite(jogo.id, 'golsCasa', e.target.value)}
-                        />
-                        <span style={s.vsSep}>VS</span>
-                        <input
-                          type="number" min="0" max="20" placeholder="0"
-                          style={s.scoreInput}
-                          onChange={e => handleInputPalpite(jogo.id, 'golsFora', e.target.value)}
-                        />
+                    <div style={s.matchContent}>
+                      <div style={s.teamInfo}>
+                        {jogo.escudoCasa
+                          ? <img src={jogo.escudoCasa} alt={jogo.timeCasa} style={s.crest} />
+                          : <div style={s.crestFallback}>{jogo.timeCasa?.substring(0, 3).toUpperCase()}</div>
+                        }
+                        <span style={s.teamName}>{jogo.timeCasa}</span>
                       </div>
-                      <div style={s.timeBadge}>{formatarData(jogo.dataPartida)}</div>
+
+                      <div style={s.scoreBoard}>
+                        <div style={s.inputsRow}>
+                          <input
+                            type="number" min="0" max="20" placeholder="0"
+                            style={jaConfirmado ? s.scoreInputLocked : s.scoreInput}
+                            disabled={jaConfirmado}
+                            value={jaConfirmado ? palpiteFeito.casa : (meusPalpites[jogo.id]?.golsCasa ?? '')}
+                            onChange={e => handleInputPalpite(jogo.id, 'golsCasa', e.target.value)}
+                          />
+                          <span style={s.vsSep}>VS</span>
+                          <input
+                            type="number" min="0" max="20" placeholder="0"
+                            style={jaConfirmado ? s.scoreInputLocked : s.scoreInput}
+                            disabled={jaConfirmado}
+                            value={jaConfirmado ? palpiteFeito.fora : (meusPalpites[jogo.id]?.golsFora ?? '')}
+                            onChange={e => handleInputPalpite(jogo.id, 'golsFora', e.target.value)}
+                          />
+                        </div>
+                        <div style={s.timeBadge}>{formatarData(jogo.dataPartida)}</div>
+                      </div>
+
+                      <div style={s.teamInfo}>
+                        {jogo.escudoFora
+                          ? <img src={jogo.escudoFora} alt={jogo.timeFora} style={s.crest} />
+                          : <div style={s.crestFallback}>{jogo.timeFora?.substring(0, 3).toUpperCase()}</div>
+                        }
+                        <span style={s.teamName}>{jogo.timeFora}</span>
+                      </div>
                     </div>
 
-                    {/* Time de fora */}
-                    <div style={s.teamInfo}>
-                      {jogo.escudoFora
-                        ? <img src={jogo.escudoFora} alt={jogo.timeFora} style={s.crest} />
-                        : <div style={s.crestFallback}>{jogo.timeFora?.substring(0, 3).toUpperCase()}</div>
-                      }
-                      <span style={s.teamName}>{jogo.timeFora}</span>
-                    </div>
+                    <button
+                      onClick={() => salvarPalpite(jogo.id)}
+                      disabled={jaConfirmado}
+                      style={jaConfirmado ? s.btnSaved : s.btnConfirm}
+                    >
+                      {jaConfirmado ? `✓ Palpite: ${palpiteFeito.casa} x ${palpiteFeito.fora}` : 'Confirmar Palpite'}
+                    </button>
                   </div>
-
-                  <button
-                    onClick={() => salvarPalpite(jogo.id)}
-                    style={confirmados[jogo.id] ? s.btnSaved : s.btnConfirm}
-                  >
-                    {confirmados[jogo.id] ? '✓ Palpite salvo!' : 'Confirmar Palpite'}
-                  </button>
-                </div>
-              ))
+                );
+              })
             )}
           </section>
         ) : (
           <section>
             <h3 style={s.sectionTitle}>Ranking do Grupo</h3>
-            <div style={s.gameCard}>
-              <p style={{ color: '#aaa', textAlign: 'center' }}>
-                1º {bolao?.dono?.nome || 'Dono'} — 0 pts
-              </p>
-            </div>
+
+            {loadingRanking ? (
+              <p style={{ color: '#00e676', textAlign: 'center' }}>Carregando ranking...</p>
+            ) : ranking.length === 0 ? (
+              <div style={s.emptyCard}>Nenhum participante ainda.</div>
+            ) : (
+              ranking.map((participante, index) => (
+                <div
+                  key={participante.id}
+                  style={{
+                    ...s.rankingCard,
+                    ...(index === 0 ? s.rankingFirst : {}),
+                  }}
+                >
+                  <span style={s.rankingPos}>{getMedalha(index)}</span>
+                  <span style={s.rankingNome}>{participante.nickname || '—'}</span>
+                  <span style={s.rankingPontos}>{participante.pontosTotal ?? 0} pts</span>
+                </div>
+              ))
+            )}
           </section>
         )}
       </main>
@@ -240,8 +303,14 @@ const s = {
   scoreBoard: { textAlign: 'center', width: '30%' },
   inputsRow: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 6 },
   scoreInput: { width: 44, height: 44, textAlign: 'center', fontSize: 18, fontWeight: 'bold', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 8, background: 'rgba(0,0,0,0.3)', color: '#fff', outline: 'none' },
+  scoreInputLocked: { width: 44, height: 44, textAlign: 'center', fontSize: 18, fontWeight: 'bold', border: '1px solid #00e676', borderRadius: 8, background: 'rgba(0,230,118,0.08)', color: '#00e676', outline: 'none', cursor: 'not-allowed' },
   vsSep: { fontSize: 16, fontWeight: 'bold', color: '#fff', letterSpacing: 1 },
   timeBadge: { fontSize: 11, color: '#00e676', fontWeight: 'bold' },
   btnConfirm: { width: '100%', padding: 10, background: '#00e676', color: '#000', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 'bold', cursor: 'pointer' },
   btnSaved: { width: '100%', padding: 10, background: 'transparent', color: '#00e676', border: '1px solid #00e676', borderRadius: 8, fontSize: 13, fontWeight: 'bold', cursor: 'default' },
+  rankingCard: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: '14px 24px', marginBottom: 10 },
+  rankingFirst: { border: '1px solid #00e676', background: 'rgba(0,230,118,0.07)' },
+  rankingPos: { fontSize: 22, width: 36 },
+  rankingNome: { fontSize: 15, fontWeight: 'bold', flex: 1, marginLeft: 12 },
+  rankingPontos: { fontSize: 15, fontWeight: 'bold', color: '#00e676' },
 };

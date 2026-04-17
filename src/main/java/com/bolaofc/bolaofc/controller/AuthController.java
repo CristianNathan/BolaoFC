@@ -30,40 +30,42 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity register(@RequestBody Map<String, String> data) {
-        String nome = data.get("nome");
+        String nickname = data.get("nickname");
         String email = data.get("email");
         String senhaPura = data.get("senha");
 
-        if (this.userService.buscarPorEmail(email) != null) {
-            return ResponseEntity.badRequest().body("Usuário já existe");
+        // Valida email duplicado
+        if (userService.buscarPorEmail(email) != null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "E-mail já está em uso."));
+        }
+
+        if (userService.existePorNickname(nickname)) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Nickname já está em uso. Escolha outro."));
+        }
+
+        // Valida formato do nickname
+        if (nickname == null || !nickname.matches("^[a-zA-Z0-9_]{3,20}$")) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Nickname inválido. Use só letras, números e _ (3 a 20 caracteres)."));
         }
 
         User newUser = new User();
-        newUser.setNome(nome);
+        newUser.setNickname(nickname);
         newUser.setEmail(email);
         newUser.setSenha(senhaPura);
 
-        this.userService.salvar(newUser);
+        userService.salvar(newUser);
 
-        return ResponseEntity.ok("Usuário criado com sucesso!");
+        return ResponseEntity.ok(Map.of("message", "Usuário criado com sucesso!"));
     }
 
     @PostMapping("/login")
-    public ResponseEntity login(@RequestBody Map<String, String> data){
+    public ResponseEntity login(@RequestBody Map<String, String> data) {
         String email = data.get("email");
         String senhaDigitada = data.get("senha");
-
-        System.out.println("--- DEBUG LOGIN ---");
-        System.out.println("Email: " + email);
-        System.out.println("Senha digitada: " + senhaDigitada);
 
         try {
             User user = userService.buscarPorEmail(email);
             if (user == null) return ResponseEntity.status(401).body("Usuário não encontrado");
-
-
-            boolean matches = passwordEncoder.matches(senhaDigitada, user.getSenha());
-            System.out.println("A senha bate no manual? " + matches);
 
             var usernameSenha = new UsernamePasswordAuthenticationToken(email, senhaDigitada);
             var auth = authenticationManager.authenticate(usernameSenha);

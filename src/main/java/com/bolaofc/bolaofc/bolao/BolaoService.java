@@ -55,10 +55,12 @@ public class BolaoService {
     }
 
     @Transactional(readOnly = true)
-    public List<Bolao> listarBoloesPublicos() {
-        return bolaoRepository.findByPrivadoFalse();
+    public List<Bolao> listarBoloesPublicos(List<String> ligas, UUID userId) {
+        if (ligas != null && !ligas.isEmpty()) {
+            return bolaoRepository.findByPrivadoFalseAndLigasAndDonoIdNot(ligas, userId);
+        }
+        return bolaoRepository.findByPrivadoFalseAndDonoIdNot(userId);
     }
-
     public Optional<Bolao> buscarPorId(UUID id){
         return bolaoRepository.findById(id);
     }

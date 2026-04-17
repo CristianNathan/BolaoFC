@@ -10,6 +10,7 @@ import java.util.UUID;
 @Repository
 public interface BolaoParticipanteRepository extends JpaRepository<BolaoParticipante, UUID> {
 
+    boolean existsByUserIdAndBolaoId(UUID userId, UUID bolaoId);
 
     List<BolaoParticipante> findByUserId(UUID userId);
 

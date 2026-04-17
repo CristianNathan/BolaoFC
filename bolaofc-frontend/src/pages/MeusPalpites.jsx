@@ -15,11 +15,13 @@ export default function MeusPalpites() {
   }, []);
 
   const formatarData = (dataStr) => {
-    if (!dataStr) return '—';
-    const data = new Date(dataStr);
-    const hora = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    return data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ` às ${hora}`;
-  };
+  if (!dataStr) return '—';
+  const dataUtc = dataStr.endsWith('Z') ? dataStr : dataStr + 'Z';
+  const data = new Date(dataUtc);
+  const hora = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
+  const dataBr = data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'America/Sao_Paulo' });
+  return `${dataBr} às ${hora}`;
+};
 
   const formatarNomeLiga = (codigo) => {
     const nomes = {
@@ -68,11 +70,17 @@ export default function MeusPalpites() {
             </span>
             <span style={s.resumoLabel}>pontos totais</span>
           </div>
-          <div style={s.resumoCard}>
+
+          {/* Card de acertos — clicável */}
+          <div
+            style={s.resumoCardClickable}
+            onClick={() => navigate('/acertos')}
+            title="Ver meus acertos"
+          >
             <span style={s.resumoNum}>
               {palpites.filter(p => p.status === 'CORRETO').length}
             </span>
-            <span style={s.resumoLabel}>acertos</span>
+            <span style={s.resumoLabelGreen}>acertos ↗</span>
           </div>
         </div>
 
@@ -86,77 +94,77 @@ export default function MeusPalpites() {
             </button>
           </div>
         ) : (
-          palpites.map(palpite => {
-            const partida = palpite.partida;
-            const statusInfo = getStatusInfo(palpite);
-            const finalizada = partida?.status === 'FINALIZADA';
+          [...palpites]
+            .sort((a, b) => new Date(b.partida?.dataPartida) - new Date(a.partida?.dataPartida))
+            .map(palpite => {
+              const partida = palpite.partida;
+              const statusInfo = getStatusInfo(palpite);
+              const finalizada = partida?.status === 'FINALIZADA';
 
-            return (
-              <div key={palpite.id} style={s.gameCard}>
+              return (
+                <div key={palpite.id} style={s.gameCard}>
 
-                {/* Liga + bolão */}
-                <div style={s.cardHeader}>
-                  <span style={s.leagueBadge}>{formatarNomeLiga(partida?.liga)}</span>
-                  <span style={s.bolaoBadge}>📋 {palpite.bolao?.nome}</span>
-                </div>
-
-                {/* Times */}
-                <div style={s.matchContent}>
-
-                  {/* Time da casa */}
-                  <div style={s.teamInfo}>
-                    {partida?.escudoCasa
-                      ? <img src={partida.escudoCasa} alt={partida.timeCasa} style={s.crest} />
-                      : <div style={s.crestFallback}>{partida?.timeCasa?.substring(0, 3).toUpperCase()}</div>
-                    }
-                    <span style={s.teamName}>{partida?.timeCasa}</span>
+                  {/* Liga + bolão */}
+                  <div style={s.cardHeader}>
+                    <span style={s.leagueBadge}>{formatarNomeLiga(partida?.liga)}</span>
+                    <span style={s.bolaoBadge}>📋 {palpite.bolao?.nome}</span>
                   </div>
 
-                  {/* Centro */}
-                  <div style={s.scoreBoard}>
-                    {/* Meu palpite */}
-                    <div style={s.meuPalpiteLabel}>meu palpite</div>
-                    <div style={s.meuPalpiteScore}>
-                      {palpite.palpiteCasa} × {palpite.palpiteFora}
+                  {/* Times */}
+                  <div style={s.matchContent}>
+
+                    {/* Time da casa */}
+                    <div style={s.teamInfo}>
+                      {partida?.escudoCasa
+                        ? <img src={partida.escudoCasa} alt={partida.timeCasa} style={s.crest} />
+                        : <div style={s.crestFallback}>{partida?.timeCasa?.substring(0, 3).toUpperCase()}</div>
+                      }
+                      <span style={s.teamName}>{partida?.timeCasa}</span>
                     </div>
 
-                    {/* Resultado final (se acabou) */}
-                    {finalizada && (
-                      <>
-                        <div style={s.resultadoLabel}>resultado</div>
-                        <div style={s.resultadoScore}>
-                          {partida.golsCasa} × {partida.golsFora}
-                        </div>
-                      </>
-                    )}
+                    {/* Centro */}
+                    <div style={s.scoreBoard}>
+                      <div style={s.meuPalpiteLabel}>meu palpite</div>
+                      <div style={s.meuPalpiteScore}>
+                        {palpite.palpiteCasa} × {palpite.palpiteFora}
+                      </div>
 
-                    {!finalizada && (
-                      <div style={s.timeBadge}>{formatarData(partida?.dataPartida)}</div>
-                    )}
+                      {finalizada && (
+                        <>
+                          <div style={s.resultadoLabel}>resultado</div>
+                          <div style={s.resultadoScore}>
+                            {partida.golsCasa} × {partida.golsFora}
+                          </div>
+                        </>
+                      )}
+
+                      {!finalizada && (
+                        <div style={s.timeBadge}>{formatarData(partida?.dataPartida)}</div>
+                      )}
+                    </div>
+
+                    {/* Time de fora */}
+                    <div style={s.teamInfo}>
+                      {partida?.escudoFora
+                        ? <img src={partida.escudoFora} alt={partida.timeFora} style={s.crest} />
+                        : <div style={s.crestFallback}>{partida?.timeFora?.substring(0, 3).toUpperCase()}</div>
+                      }
+                      <span style={s.teamName}>{partida?.timeFora}</span>
+                    </div>
                   </div>
 
-                  {/* Time de fora */}
-                  <div style={s.teamInfo}>
-                    {partida?.escudoFora
-                      ? <img src={partida.escudoFora} alt={partida.timeFora} style={s.crest} />
-                      : <div style={s.crestFallback}>{partida?.timeFora?.substring(0, 3).toUpperCase()}</div>
-                    }
-                    <span style={s.teamName}>{partida?.timeFora}</span>
+                  {/* Rodapé: status + pontos */}
+                  <div style={s.cardFooter}>
+                    <span style={{ ...s.statusBadge, color: statusInfo.color, borderColor: statusInfo.color }}>
+                      {statusInfo.label}
+                    </span>
+                    {palpite.pontosGanhos > 0 && (
+                      <span style={s.pontosBadge}>+{palpite.pontosGanhos} pts</span>
+                    )}
                   </div>
                 </div>
-
-                {/* Rodapé: status + pontos */}
-                <div style={s.cardFooter}>
-                  <span style={{ ...s.statusBadge, color: statusInfo.color, borderColor: statusInfo.color }}>
-                    {statusInfo.label}
-                  </span>
-                  {palpite.pontosGanhos > 0 && (
-                    <span style={s.pontosBadge}>+{palpite.pontosGanhos} pts</span>
-                  )}
-                </div>
-              </div>
-            );
-          })
+              );
+            })
         )}
       </main>
     </div>
@@ -171,8 +179,10 @@ const s = {
   main: { maxWidth: 800, margin: '0 auto', padding: '30px 20px' },
   resumoRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 30 },
   resumoCard: { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 },
+  resumoCardClickable: { background: 'rgba(0,230,118,0.07)', border: '1px solid rgba(0,230,118,0.35)', borderRadius: 12, padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer', transition: 'background 0.2s, border-color 0.2s' },
   resumoNum: { fontSize: 28, fontWeight: 'bold', color: '#00e676' },
   resumoLabel: { fontSize: 11, color: '#aaa', textAlign: 'center' },
+  resumoLabelGreen: { fontSize: 11, color: '#00e676', textAlign: 'center', fontWeight: 'bold' },
   sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 16 },
   emptyCard: { background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.15)', borderRadius: 12, padding: 40, textAlign: 'center', color: '#aaa', display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center' },
   btnGo: { background: '#00e676', border: 'none', color: '#000', padding: '10px 24px', borderRadius: 8, fontWeight: 'bold', cursor: 'pointer', fontSize: 13 },

@@ -10,7 +10,8 @@ import java.util.UUID;
 
 public interface PalpiteRepository extends JpaRepository<Palpite, UUID> {
     Optional<Palpite> findByUserAndPartidaAndBolao(User user, Partida partida, Bolao bolao);
-    List<Palpite> findByUser(User user); // ← novo
+    List<Palpite> findByUser(User user);
     List<Palpite> findByPartida(Partida partida);
     List<Palpite> findByUserAndBolaoId(User user, UUID bolaoId);
+    List<Palpite> findByPartidaId(UUID partidaId);
 }

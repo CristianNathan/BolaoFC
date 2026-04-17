@@ -1,9 +1,8 @@
 package com.bolaofc.bolaofc.controller;
 
-import com.bolaofc.bolaofc.bolao.Bolao;
-import com.bolaofc.bolaofc.bolao.BolaoRequestDTO;
-import com.bolaofc.bolaofc.bolao.BolaoService;
+import com.bolaofc.bolaofc.bolao.*;
 import com.bolaofc.bolaofc.user.User;
+import jakarta.transaction.Transactional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -18,9 +17,13 @@ import java.util.UUID;
 public class BolaoController {
 
     private final BolaoService bolaoService;
+    private final BolaoRepository bolaoRepository;
+    private final BolaoParticipanteRepository bolaoParticipanteRepository;
 
-    public BolaoController(BolaoService bolaoService) {
+    public BolaoController(BolaoService bolaoService, BolaoRepository bolaoRepository, BolaoParticipanteRepository bolaoParticipanteRepository) {
         this.bolaoService = bolaoService;
+        this.bolaoRepository = bolaoRepository;
+        this.bolaoParticipanteRepository = bolaoParticipanteRepository;
     }
 
     @PostMapping("/criar")
@@ -33,38 +36,54 @@ public class BolaoController {
     }
 
     @PostMapping("/entrar")
-    public ResponseEntity entrarNoBolao(@RequestBody EntrarBolaoDTO dados){
-        var bolaoEncontrado = bolaoService.entrarNoBolao(dados.codigoConvite());
-        if (bolaoEncontrado == null) {
-            return ResponseEntity.status(404).body("Bolão não encontrado ou código inválido");
-        }
-        return ResponseEntity.ok(bolaoEncontrado);
-    }
-
-    @GetMapping("/meus")
-    public ResponseEntity<List<Bolao>> listarMeusBoloes() {
+    @Transactional
+    public ResponseEntity<?> entrarNoBolao(@RequestBody EntrarBolaoDTO dados) {
         var user = getUsuarioLogado();
         if (user == null) return ResponseEntity.status(401).build();
 
-        List<Bolao> boloes = bolaoService.listarBoloesDoUsuario(user.getId());
+        Bolao bolao = bolaoRepository.findByCodigoConvite(dados.codigoConvite());
+        if (bolao == null) return ResponseEntity.status(404).body("Bolão não encontrado ou código inválido");
+
+        boolean jaParticipa = bolaoParticipanteRepository.existsByUserIdAndBolaoId(user.getId(), bolao.getId());
+        if (!jaParticipa) {
+            BolaoParticipante participante = new BolaoParticipante();
+            participante.setUser(user);
+            participante.setBolao(bolao);
+            participante.setPontosTotal(0L);
+            bolaoParticipanteRepository.save(participante);
+        }
+        return ResponseEntity.ok(bolao);
+    }
+
+
+
+    @GetMapping("/meus")
+    public ResponseEntity<List<BolaoResponseDTO>> listarMeusBoloes() {
+        var user = getUsuarioLogado();
+        if (user == null) return ResponseEntity.status(401).build();
+
+        List<BolaoResponseDTO> boloes = bolaoService.listarBoloesDoUsuario(user.getId())
+                .stream().map(BolaoResponseDTO::from).toList();
         return ResponseEntity.ok(boloes);
     }
 
     @GetMapping("/publicos")
-    public ResponseEntity<List<Bolao>> listarBoloesPublicos() {
-        List<Bolao> publicos = bolaoService.listarBoloesPublicos();
+    public ResponseEntity<List<BolaoResponseDTO>> listarBoloesPublicos(
+            @RequestParam(required = false) List<String> ligas) {
+        var user = getUsuarioLogado();
+        if (user == null) return ResponseEntity.status(401).build();
+
+        List<BolaoResponseDTO> publicos = bolaoService.listarBoloesPublicos(ligas, user.getId())
+                .stream().map(BolaoResponseDTO::from).toList();
         return ResponseEntity.ok(publicos);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Bolao> buscarPorId(@PathVariable UUID id) {
-        Optional<Bolao> bolaoOptional = bolaoService.buscarPorId(id);
-
-        if (bolaoOptional.isPresent()) {
-            return ResponseEntity.ok(bolaoOptional.get());
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<BolaoResponseDTO> buscarPorId(@PathVariable UUID id) {
+        return bolaoService.buscarPorId(id)
+                .map(BolaoResponseDTO::from)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     private User getUsuarioLogado() {

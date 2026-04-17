@@ -21,6 +21,17 @@ public class User implements UserDetails {
 
     private String nome;
 
+    @Column(unique = true,nullable = false)
+    private String nickname;
+
+    public String getNickname() {
+        return nickname;
+    }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
     @Column(unique = true, nullable = false)
     private String email;
 

@@ -8,6 +8,7 @@ export default function Home() {
   const [jogos, setJogos] = useState([]);
   const [abaAtiva, setAbaAtiva] = useState('PROXIMOS'); 
   const [loading, setLoading] = useState(true);
+  const [entrando, setEntrando] = useState(false);
 
   useEffect(() => {
     api.get('/api/futebol/jogos-reais')
@@ -56,15 +57,26 @@ export default function Home() {
     return jogosProximos;
   };
 
-  const handleEntrarBolao = () => {
-    if(!codigoBolao) return alert("Digite um código!");
-    console.log("Tentando entrar no bolão:", codigoBolao);
-    // api.post('/api/bolao/entrar', { codigoConvite: codigoBolao }) ...
+  const handleEntrarBolao = async () => {
+    if (!codigoBolao.trim()) return alert("Digite um código!");
+
+    setEntrando(true);
+    try {
+      await api.post('/api/bolao/entrar', { codigoConvite: codigoBolao.trim() });
+      alert("Você entrou no bolão com sucesso! 🎉");
+      setCodigoBolao('');
+      navigate('/meus-boloes');
+    } catch (err) {
+      console.error("Erro ao entrar no bolão:", err);
+      const msg = err.response?.data || "Código inválido ou bolão não encontrado.";
+      alert(msg);
+    } finally {
+      setEntrando(false);
+    }
   };
 
   return (
     <div style={styles.container}>
-      {/* HEADER COM A NOVA OPÇÃO */}
       <header style={styles.header}>
         <div style={styles.logo}>⚽ Bolão FC</div>
         
@@ -156,9 +168,10 @@ export default function Home() {
               placeholder="Digite o código (ex: ABC-123)"
               value={codigoBolao}
               onChange={(e) => setCodigoBolao(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleEntrarBolao()}
             />
-            <button style={styles.btnSecondary} onClick={handleEntrarBolao}>
-                Entrar no Grupo
+            <button style={styles.btnSecondary} onClick={handleEntrarBolao} disabled={entrando}>
+              {entrando ? 'Entrando...' : 'Entrar no Grupo'}
             </button>
           </div>
         </section>

@@ -4,6 +4,7 @@ import com.bolaofc.bolaofc.bolao.Bolao;
 import com.bolaofc.bolaofc.bolao.BolaoRepository;
 import com.bolaofc.bolaofc.partida.Partida;
 import com.bolaofc.bolaofc.partida.PartidaRepository;
+import com.bolaofc.bolaofc.partida.StatusPartida;
 import com.bolaofc.bolaofc.transacao.Tipo;
 import com.bolaofc.bolaofc.transacao.TransacaoService;
 import com.bolaofc.bolaofc.user.User;
@@ -38,9 +39,8 @@ public class PalpiteService {
         Bolao bolao = bolaoRepository.findById(data.bolaoId())
                 .orElseThrow(() -> new RuntimeException("Bolão não encontrado"));
 
-        String status = partida.getStatus().toString();
-        if (!status.equals("AGENDADA") && !status.equals("TIMED")) {
-            throw new IllegalStateException("A partida já iniciou.");
+        if (partida.getStatus() != StatusPartida.AGENDADA) {
+            throw new IllegalStateException("Esta partida não está mais disponível para palpites.");
         }
 
         Optional<Palpite> palpiteExistente = palpiteRepository.findByUserAndPartidaAndBolao(user, partida, bolao);
@@ -62,6 +62,7 @@ public class PalpiteService {
 
         return palpiteRepository.save(palpite);
     }
+
     public List<Palpite> buscarPorUsuario(User user) {
         return palpiteRepository.findByUser(user);
     }

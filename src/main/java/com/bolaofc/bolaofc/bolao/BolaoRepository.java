@@ -12,4 +12,11 @@ public interface BolaoRepository extends JpaRepository<Bolao, UUID> {
     Bolao findByCodigoConvite(String codigoConvite);
     @Query("SELECT p.bolao FROM BolaoParticipante p WHERE p.user.id = :userId")
     List<Bolao> findByUserId(@Param("userId") UUID userId);
+    @Query("SELECT b FROM Bolao b WHERE b.privado = false AND :liga MEMBER OF b.ligasPermitidas")
+    List<Bolao> findByPrivadoFalseAndLiga(@Param("liga") String liga);
+    List<Bolao> findByPrivadoFalseAndDonoIdNot(UUID donoId);
+
+
+    @Query("SELECT DISTINCT b FROM Bolao b WHERE b.privado = false AND b.dono.id != :donoId AND EXISTS (SELECT 1 FROM b.ligasPermitidas l WHERE l IN :ligas)")
+    List<Bolao> findByPrivadoFalseAndLigasAndDonoIdNot(@Param("ligas") List<String> ligas, @Param("donoId") UUID donoId);
 }
