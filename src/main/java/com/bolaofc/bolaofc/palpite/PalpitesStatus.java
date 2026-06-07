@@ -3,5 +3,7 @@ package com.bolaofc.bolaofc.palpite;
 public enum PalpitesStatus {
     PENDENTE,
     CORRETO,
-    INCORRETO
+    INCORRETO,
+    PLACAR_EXATO,
+    ACERTOU_VENCEDOR
 }

@@ -23,14 +23,14 @@ public class FootballApiService {
     }
 
     public String buscarPartidas() {
-        String ontem = LocalDate.now().minusDays(1).toString();
+        String seteDiasAtras = LocalDate.now().minusDays(7).toString();
         String amanha = LocalDate.now().plusDays(2).toString();
 
         String ligas = "BSA,CL,PL,PD,BL1,SA,FL1";
 
         String urlPartidas = String.format(
                 "%s/matches?dateFrom=%s&dateTo=%s&competitions=%s",
-                apiUrl, ontem, amanha, ligas
+                apiUrl, seteDiasAtras, amanha, ligas
         );
 
         HttpHeaders headers = new HttpHeaders();

@@ -8,7 +8,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -27,7 +26,7 @@ public class BolaoController {
     }
 
     @PostMapping("/criar")
-    public ResponseEntity<Bolao> criarBolao(@RequestBody BolaoRequestDTO dados){
+    public ResponseEntity<Bolao> criarBolao(@RequestBody BolaoRequestDTO dados) {
         var user = getUsuarioLogado();
         if (user == null) return ResponseEntity.status(401).build();
 
@@ -50,12 +49,55 @@ public class BolaoController {
             participante.setUser(user);
             participante.setBolao(bolao);
             participante.setPontosTotal(0L);
+            participante.setEntrouEm(java.time.LocalDateTime.now());
             bolaoParticipanteRepository.save(participante);
         }
         return ResponseEntity.ok(bolao);
     }
 
+    @DeleteMapping("/{id}/sair")
+    public ResponseEntity<?> sairDoBolao(@PathVariable UUID id) {
+        var user = getUsuarioLogado();
+        if (user == null) return ResponseEntity.status(401).build();
 
+        Bolao bolao = bolaoRepository.findById(id).orElse(null);
+        if (bolao == null) return ResponseEntity.status(404).body("Bolão não encontrado.");
+
+        boolean participa = bolaoParticipanteRepository.existsByUserIdAndBolaoId(user.getId(), id);
+        if (!participa) return ResponseEntity.status(400).body("Você não participa deste bolão.");
+
+        if (bolao.getDono().getId().equals(user.getId())) {
+            return ResponseEntity.status(400).body("DONO");
+        }
+
+        bolaoService.sairDoBolao(id, user);
+        return ResponseEntity.ok("Você saiu do bolão.");
+    }
+
+    @DeleteMapping("/{id}/passar-dono")
+    public ResponseEntity<?> passarDonoESair(@PathVariable UUID id) {
+        var user = getUsuarioLogado();
+        if (user == null) return ResponseEntity.status(401).build();
+
+        try {
+            bolaoService.passarDonoESair(id, user);
+            return ResponseEntity.ok("Dono transferido e você saiu do bolão.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(400).body(e.getMessage());
+        }
+    }
+    @DeleteMapping("/{id}/excluir")
+    public ResponseEntity<?> excluirBolao(@PathVariable UUID id) {
+        var user = getUsuarioLogado();
+        if (user == null) return ResponseEntity.status(401).build();
+
+        try {
+            bolaoService.excluirBolao(id, user);
+            return ResponseEntity.ok("Bolão excluído com sucesso.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(400).body(e.getMessage());
+        }
+    }
 
     @GetMapping("/meus")
     public ResponseEntity<List<BolaoResponseDTO>> listarMeusBoloes() {

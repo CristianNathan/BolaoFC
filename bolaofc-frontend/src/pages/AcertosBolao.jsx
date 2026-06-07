@@ -7,6 +7,7 @@ export default function AcertosBolao() {
   const [palpites, setPalpites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [bolaoSelecionado, setBolaoSelecionado] = useState('todos');
+  const [tipoSelecionado, setTipoSelecionado] = useState('todos');
   const [boloes, setBoloes] = useState([]);
 
   useEffect(() => {
@@ -15,7 +16,6 @@ export default function AcertosBolao() {
         const todos = res.data;
         setPalpites(todos);
 
-        // Extrai bolões únicos dos palpites
         const boloesMap = {};
         todos.forEach(p => {
           if (p.bolao?.id) {
@@ -28,25 +28,31 @@ export default function AcertosBolao() {
       .finally(() => setLoading(false));
   }, []);
 
-  const acertos = palpites.filter(p => p.status === 'CORRETO');
-
-  const acertosFiltrados = bolaoSelecionado === 'todos'
-    ? acertos
-    : acertos.filter(p => p.bolao?.id === bolaoSelecionado);
-
   const getTipoAcerto = (palpite) => {
     const partida = palpite.partida;
-    if (!partida) return { label: 'Acerto', color: '#00e676', icon: '✓' };
+    if (!partida) return { label: 'Acerto', color: '#00e676', icon: '✓', key: 'vencedor' };
 
     const placarExato =
       palpite.palpiteCasa === partida.golsCasa &&
       palpite.palpiteFora === partida.golsFora;
 
     if (placarExato) {
-      return { label: 'Placar exato', color: '#ffd700', icon: '🎯' };
+      return { label: 'Placar Exato', color: '#ffd700', icon: '🎯', key: 'placar' };
     }
-    return { label: 'Acertou vencedor', color: '#00e676', icon: '✓' };
+    return { label: 'Acertou o Palpite', color: '#00e676', icon: '✅', key: 'vencedor' };
   };
+
+  const acertos = palpites.filter(p =>
+    p.status === 'CORRETO' || p.status === 'PLACAR_EXATO' || p.status === 'ACERTOU_VENCEDOR'
+  );
+
+  const acertosPorBolao = bolaoSelecionado === 'todos'
+    ? acertos
+    : acertos.filter(p => p.bolao?.id === bolaoSelecionado);
+
+  const acertosFiltrados = tipoSelecionado === 'todos'
+    ? acertosPorBolao
+    : acertosPorBolao.filter(p => getTipoAcerto(p).key === tipoSelecionado);
 
   const formatarNomeLiga = (codigo) => {
     const nomes = {
@@ -62,8 +68,8 @@ export default function AcertosBolao() {
   };
 
   const totalPontos = acertosFiltrados.reduce((acc, p) => acc + (p.pontosGanhos || 0), 0);
-  const placaresExatos = acertosFiltrados.filter(p => getTipoAcerto(p).label === 'Placar exato').length;
-  const vencedores = acertosFiltrados.filter(p => getTipoAcerto(p).label === 'Acertou vencedor').length;
+  const placaresExatos = acertosPorBolao.filter(p => getTipoAcerto(p).key === 'placar').length;
+  const resultados = acertosPorBolao.filter(p => getTipoAcerto(p).key === 'vencedor').length;
 
   if (loading) return (
     <div style={s.container}>
@@ -84,7 +90,7 @@ export default function AcertosBolao() {
         {/* Cards de resumo */}
         <div style={s.resumoRow}>
           <div style={s.resumoCard}>
-            <span style={s.resumoNum}>{acertosFiltrados.length}</span>
+            <span style={s.resumoNum}>{acertosPorBolao.length}</span>
             <span style={s.resumoLabel}>acertos</span>
           </div>
           <div style={s.resumoCard}>
@@ -92,8 +98,8 @@ export default function AcertosBolao() {
             <span style={s.resumoLabel}>placares exatos</span>
           </div>
           <div style={s.resumoCard}>
-            <span style={s.resumoNum}>{vencedores}</span>
-            <span style={s.resumoLabel}>acertou vencedor</span>
+            <span style={s.resumoNum}>{resultados}</span>
+            <span style={s.resumoLabel}>acertou o palpite</span>
           </div>
           <div style={{ ...s.resumoCard, gridColumn: '1 / -1' }}>
             <span style={{ ...s.resumoNum, fontSize: 32 }}>{totalPontos}</span>
@@ -120,14 +126,44 @@ export default function AcertosBolao() {
           ))}
         </div>
 
+        {/* Filtro por tipo de acerto */}
+        <div style={s.tipoFiltroRow}>
+          <button
+            onClick={() => setTipoSelecionado('todos')}
+            style={{ ...s.filtroBtn, ...(tipoSelecionado === 'todos' ? s.filtroBtnAtivo : {}) }}
+          >
+            ⚽ Todos
+          </button>
+          <button
+            onClick={() => setTipoSelecionado('placar')}
+            style={{
+              ...s.filtroBtn,
+              ...(tipoSelecionado === 'placar' ? {
+                background: 'rgba(255,215,0,0.12)',
+                border: '1px solid #ffd700',
+                color: '#ffd700',
+                fontWeight: 'bold',
+              } : {})
+            }}
+          >
+            🎯 Placar Exato ({placaresExatos})
+          </button>
+          <button
+            onClick={() => setTipoSelecionado('vencedor')}
+            style={{ ...s.filtroBtn, ...(tipoSelecionado === 'vencedor' ? s.filtroBtnAtivo : {}) }}
+          >
+            ✅ Acertou o Palpite ({resultados})
+          </button>
+        </div>
+
         {/* Lista de acertos */}
         {acertosFiltrados.length === 0 ? (
           <div style={s.emptyCard}>
             <span style={{ fontSize: 40 }}>😔</span>
             <p style={{ color: '#aaa', margin: 0 }}>
-              {bolaoSelecionado === 'todos'
+              {bolaoSelecionado === 'todos' && tipoSelecionado === 'todos'
                 ? 'Você ainda não tem acertos.'
-                : 'Nenhum acerto neste bolão ainda.'}
+                : 'Nenhum acerto com esse filtro ainda.'}
             </p>
             <button onClick={() => navigate('/meus-boloes')} style={s.btnGo}>
               Ir para meus bolões
@@ -150,7 +186,6 @@ export default function AcertosBolao() {
                 {/* Times */}
                 <div style={s.matchContent}>
 
-                  {/* Time da casa */}
                   <div style={s.teamInfo}>
                     {partida?.escudoCasa
                       ? <img src={partida.escudoCasa} alt={partida.timeCasa} style={s.crest} />
@@ -159,7 +194,6 @@ export default function AcertosBolao() {
                     <span style={s.teamName}>{partida?.timeCasa}</span>
                   </div>
 
-                  {/* Centro */}
                   <div style={s.scoreBoard}>
                     <div style={s.meuPalpiteLabel}>meu palpite</div>
                     <div style={s.meuPalpiteScore}>
@@ -180,7 +214,7 @@ export default function AcertosBolao() {
                   </div>
                 </div>
 
-                {/* Rodapé: tipo de acerto + pontos */}
+                {/* Rodapé */}
                 <div style={s.cardFooter}>
                   <span style={{ ...s.tipoBadge, color: tipo.color, borderColor: tipo.color }}>
                     {tipo.icon} {tipo.label}
@@ -212,6 +246,7 @@ const s = {
   resumoNum: { fontSize: 28, fontWeight: 'bold', color: '#00e676' },
   resumoLabel: { fontSize: 11, color: '#aaa', textAlign: 'center' },
 
+  tipoFiltroRow: { display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 24 },
   filtroRow: { display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 24 },
   filtroBtn: { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', color: '#aaa', padding: '7px 14px', borderRadius: 20, cursor: 'pointer', fontSize: 12, transition: 'all 0.2s' },
   filtroBtnAtivo: { background: 'rgba(0,230,118,0.15)', border: '1px solid #00e676', color: '#00e676', fontWeight: 'bold' },

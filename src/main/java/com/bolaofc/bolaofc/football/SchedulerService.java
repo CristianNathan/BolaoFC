@@ -57,7 +57,11 @@ public class SchedulerService {
                 String escudoCasa = match.get("homeTeam").get("crest").asText();
                 String escudoFora = match.get("awayTeam").get("crest").asText();
 
-                Optional<Partida> existente = partidaRepository.findByTimeCasaAndTimeFora(timeCasa, timeFora);
+                LocalDateTime dataPartida = LocalDateTime.parse(dataStr, DateTimeFormatter.ISO_DATE_TIME);
+
+                Optional<Partida> existente = partidaRepository
+                        .findByTimeCasaAndTimeForaAndDataPartida(timeCasa, timeFora, dataPartida);
+
                 Partida partida = existente.orElse(new Partida());
 
                 partida.setTimeCasa(timeCasa);
@@ -65,10 +69,7 @@ public class SchedulerService {
                 partida.setLiga(ligaCodigo);
                 partida.setEscudoCasa(escudoCasa);
                 partida.setEscudoFora(escudoFora);
-
-                partida.setDataPartida(
-                        LocalDateTime.parse(dataStr, DateTimeFormatter.ISO_DATE_TIME)
-                );
+                partida.setDataPartida(dataPartida);
 
                 StatusPartida status = switch (statusApi) {
                     case "FINISHED" -> StatusPartida.FINALIZADA;
@@ -80,25 +81,23 @@ public class SchedulerService {
 
                 if (statusApi.equals("FINISHED")) {
                     JsonNode score = match.get("score").get("fullTime");
-
                     int golsCasa = score.get("home").isNull() ? 0 : score.get("home").asInt();
                     int golsFora = score.get("away").isNull() ? 0 : score.get("away").asInt();
-
                     partida.setGolsCasa(golsCasa);
                     partida.setGolsFora(golsFora);
                 }
 
-                partidaRepository.save(partida);
+                Partida partidaSalva = partidaRepository.save(partida);
 
-                if (statusApi.equals("FINISHED") && partida.getGolsCasa() != null) {
-
+                // CORRIGIDO: remove o !eraFinalizada, verifica só se já foi calculado
+                if (statusApi.equals("FINISHED")) {
                     boolean jaCalculado = palpiteRepository
-                            .findByPartidaId(partida.getId())
+                            .findByPartidaId(partidaSalva.getId())
                             .stream()
                             .anyMatch(p -> p.getStatus() != PalpitesStatus.PENDENTE);
 
                     if (!jaCalculado) {
-                        pontuacaoService.calcularPontuacao(partida);
+                        pontuacaoService.calcularPontuacao(partidaSalva);
                     }
                 }
             }
@@ -107,6 +106,7 @@ public class SchedulerService {
 
         } catch (Exception e) {
             System.err.println("Erro ao sincronizar partidas: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

@@ -15,13 +15,13 @@ export default function MeusPalpites() {
   }, []);
 
   const formatarData = (dataStr) => {
-  if (!dataStr) return '—';
-  const dataUtc = dataStr.endsWith('Z') ? dataStr : dataStr + 'Z';
-  const data = new Date(dataUtc);
-  const hora = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
-  const dataBr = data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'America/Sao_Paulo' });
-  return `${dataBr} às ${hora}`;
-};
+    if (!dataStr) return '—';
+    const dataUtc = dataStr.endsWith('Z') ? dataStr : dataStr + 'Z';
+    const data = new Date(dataUtc);
+    const hora = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
+    const dataBr = data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'America/Sao_Paulo' });
+    return `${dataBr} às ${hora}`;
+  };
 
   const formatarNomeLiga = (codigo) => {
     const nomes = {
@@ -36,11 +36,32 @@ export default function MeusPalpites() {
     return nomes[codigo] || codigo;
   };
 
+  // Detecta placar exato vs vencedor (igual ao AcertosBolao)
   const getStatusInfo = (palpite) => {
-    if (palpite.status === 'PENDENTE') return { label: 'Aguardando', color: '#aaa' };
-    if (palpite.status === 'CORRETO')  return { label: '✓ Acertou!', color: '#00e676' };
-    if (palpite.status === 'ERRADO')   return { label: '✗ Errou', color: '#ff5252' };
-    return { label: palpite.status, color: '#aaa' };
+    const partida = palpite.partida;
+    const finalizada = partida?.status === 'FINALIZADA';
+
+    // Para partidas finalizadas, calcula na hora (igual AcertosBolao)
+    if (finalizada && (palpite.status === 'CORRETO' || palpite.status === 'PLACAR_EXATO' || palpite.status === 'ACERTOU_VENCEDOR')) {
+      const placarExato =
+        palpite.palpiteCasa === partida.golsCasa &&
+        palpite.palpiteFora === partida.golsFora;
+
+      if (placarExato) {
+        return { label: 'Placar Exato!', color: '#ffd700', icon: '🎯' };
+      }
+      return { label: 'Acertou o Palpite', color: '#00e676', icon: '✅' };
+    }
+
+    switch (palpite.status) {
+      case 'PLACAR_EXATO':     return { label: 'Placar Exato!',      color: '#ffd700', icon: '🎯' };
+      case 'ACERTOU_VENCEDOR': return { label: 'Acertou o Palpite',  color: '#00e676', icon: '✅' };
+      case 'CORRETO':          return { label: 'Acertou!',         color: '#00e676', icon: '✓'  };
+      case 'PENDENTE':         return { label: 'Aguardando',       color: '#aaa',    icon: '⏳' };
+      case 'INCORRETO':
+      case 'ERRADO':           return { label: 'Errou',            color: '#ff5252', icon: '✗'  };
+      default:                 return { label: palpite.status,     color: '#aaa',    icon: ''   };
+    }
   };
 
   if (loading) return (
@@ -58,7 +79,6 @@ export default function MeusPalpites() {
       </header>
 
       <main style={s.main}>
-        {/* Resumo no topo */}
         <div style={s.resumoRow}>
           <div style={s.resumoCard}>
             <span style={s.resumoNum}>{palpites.length}</span>
@@ -70,15 +90,13 @@ export default function MeusPalpites() {
             </span>
             <span style={s.resumoLabel}>pontos totais</span>
           </div>
-
-          {/* Card de acertos — clicável */}
           <div
             style={s.resumoCardClickable}
             onClick={() => navigate('/acertos')}
             title="Ver meus acertos"
           >
             <span style={s.resumoNum}>
-              {palpites.filter(p => p.status === 'CORRETO').length}
+              {palpites.filter(p => ['CORRETO', 'PLACAR_EXATO', 'ACERTOU_VENCEDOR'].includes(p.status)).length}
             </span>
             <span style={s.resumoLabelGreen}>acertos ↗</span>
           </div>
@@ -102,7 +120,7 @@ export default function MeusPalpites() {
               const finalizada = partida?.status === 'FINALIZADA';
 
               return (
-                <div key={palpite.id} style={s.gameCard}>
+                <div key={palpite.id} style={{ ...s.gameCard, borderLeft: `3px solid ${statusInfo.color}` }}>
 
                   {/* Liga + bolão */}
                   <div style={s.cardHeader}>
@@ -113,7 +131,6 @@ export default function MeusPalpites() {
                   {/* Times */}
                   <div style={s.matchContent}>
 
-                    {/* Time da casa */}
                     <div style={s.teamInfo}>
                       {partida?.escudoCasa
                         ? <img src={partida.escudoCasa} alt={partida.timeCasa} style={s.crest} />
@@ -122,7 +139,6 @@ export default function MeusPalpites() {
                       <span style={s.teamName}>{partida?.timeCasa}</span>
                     </div>
 
-                    {/* Centro */}
                     <div style={s.scoreBoard}>
                       <div style={s.meuPalpiteLabel}>meu palpite</div>
                       <div style={s.meuPalpiteScore}>
@@ -143,7 +159,6 @@ export default function MeusPalpites() {
                       )}
                     </div>
 
-                    {/* Time de fora */}
                     <div style={s.teamInfo}>
                       {partida?.escudoFora
                         ? <img src={partida.escudoFora} alt={partida.timeFora} style={s.crest} />
@@ -153,13 +168,15 @@ export default function MeusPalpites() {
                     </div>
                   </div>
 
-                  {/* Rodapé: status + pontos */}
+                  {/* Rodapé — igual ao AcertosBolao */}
                   <div style={s.cardFooter}>
-                    <span style={{ ...s.statusBadge, color: statusInfo.color, borderColor: statusInfo.color }}>
-                      {statusInfo.label}
+                    <span style={{ ...s.tipoBadge, color: statusInfo.color, borderColor: statusInfo.color }}>
+                      {statusInfo.icon} {statusInfo.label}
                     </span>
                     {palpite.pontosGanhos > 0 && (
-                      <span style={s.pontosBadge}>+{palpite.pontosGanhos} pts</span>
+                      <span style={{ ...s.pontosBadge, color: statusInfo.color }}>
+                        +{palpite.pontosGanhos} pts
+                      </span>
                     )}
                   </div>
                 </div>
@@ -177,6 +194,7 @@ const s = {
   backBtn: { background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', padding: '8px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 14 },
   logo: { fontSize: 18, fontWeight: 'bold', color: '#00e676' },
   main: { maxWidth: 800, margin: '0 auto', padding: '30px 20px' },
+
   resumoRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 30 },
   resumoCard: { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 },
   resumoCardClickable: { background: 'rgba(0,230,118,0.07)', border: '1px solid rgba(0,230,118,0.35)', borderRadius: 12, padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer', transition: 'background 0.2s, border-color 0.2s' },
@@ -184,24 +202,30 @@ const s = {
   resumoLabel: { fontSize: 11, color: '#aaa', textAlign: 'center' },
   resumoLabelGreen: { fontSize: 11, color: '#00e676', textAlign: 'center', fontWeight: 'bold' },
   sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 16 },
+
   emptyCard: { background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.15)', borderRadius: 12, padding: 40, textAlign: 'center', color: '#aaa', display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center' },
   btnGo: { background: '#00e676', border: 'none', color: '#000', padding: '10px 24px', borderRadius: 8, fontWeight: 'bold', cursor: 'pointer', fontSize: 13 },
+
   gameCard: { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: '15px 25px', marginBottom: 15 },
   cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   leagueBadge: { fontSize: 11, color: '#00e676', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 1 },
   bolaoBadge: { fontSize: 11, color: '#aaa' },
+
   matchContent: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   teamInfo: { display: 'flex', flexDirection: 'column', alignItems: 'center', width: '35%', gap: 8 },
   crest: { width: 52, height: 52, objectFit: 'contain' },
   crestFallback: { width: 52, height: 52, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 'bold', color: '#fff' },
   teamName: { fontSize: 13, textAlign: 'center', color: '#fff' },
+
   scoreBoard: { textAlign: 'center', width: '30%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 },
   meuPalpiteLabel: { fontSize: 10, color: '#aaa', textTransform: 'uppercase', letterSpacing: 1 },
   meuPalpiteScore: { fontSize: 22, fontWeight: 'bold', color: '#fff', letterSpacing: 2 },
   resultadoLabel: { fontSize: 10, color: '#aaa', textTransform: 'uppercase', letterSpacing: 1, marginTop: 4 },
   resultadoScore: { fontSize: 16, fontWeight: 'bold', color: '#00e676', letterSpacing: 2 },
   timeBadge: { fontSize: 11, color: '#00e676', fontWeight: 'bold', marginTop: 4 },
+
   cardFooter: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 10 },
-  statusBadge: { fontSize: 12, fontWeight: 'bold', border: '1px solid', padding: '3px 10px', borderRadius: 20 },
-  pontosBadge: { fontSize: 13, fontWeight: 'bold', color: '#00e676' },
+  // tipoBadge igual ao AcertosBolao (sem background colorido, só borda + texto colorido)
+  tipoBadge: { fontSize: 12, fontWeight: 'bold', border: '1px solid', padding: '3px 10px', borderRadius: 20 },
+  pontosBadge: { fontSize: 13, fontWeight: 'bold' },
 };

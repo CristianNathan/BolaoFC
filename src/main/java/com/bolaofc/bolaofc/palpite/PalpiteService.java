@@ -66,4 +66,7 @@ public class PalpiteService {
     public List<Palpite> buscarPorUsuario(User user) {
         return palpiteRepository.findByUser(user);
     }
+    public List<Palpite> buscarPorUsuarioEStatus(User user, PalpitesStatus status) {
+        return palpiteRepository.findByUserAndStatus(user, status);
+    }
 }

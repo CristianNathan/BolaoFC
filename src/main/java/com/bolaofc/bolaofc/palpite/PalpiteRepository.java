@@ -14,4 +14,5 @@ public interface PalpiteRepository extends JpaRepository<Palpite, UUID> {
     List<Palpite> findByPartida(Partida partida);
     List<Palpite> findByUserAndBolaoId(User user, UUID bolaoId);
     List<Palpite> findByPartidaId(UUID partidaId);
+    List<Palpite> findByUserAndStatus(User user, PalpitesStatus status);
 }

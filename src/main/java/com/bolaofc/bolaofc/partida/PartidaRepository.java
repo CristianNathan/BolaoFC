@@ -3,6 +3,7 @@ package com.bolaofc.bolaofc.partida;
 import com.bolaofc.bolaofc.bolao.Bolao;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -16,6 +17,8 @@ public interface PartidaRepository extends JpaRepository<Partida, UUID> {
     Optional<Partida> findByTimeCasaAndTimeFora(String timeCasa, String timeFora);
 
     List<Partida> findByBolao(Bolao bolao);
+
+    Optional<Partida> findByTimeCasaAndTimeForaAndDataPartida(String timeCasa, String timeFora, LocalDateTime dataPartida);
 
 
 }

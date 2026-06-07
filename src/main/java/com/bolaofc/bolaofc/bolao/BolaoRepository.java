@@ -19,4 +19,6 @@ public interface BolaoRepository extends JpaRepository<Bolao, UUID> {
 
     @Query("SELECT DISTINCT b FROM Bolao b WHERE b.privado = false AND b.dono.id != :donoId AND EXISTS (SELECT 1 FROM b.ligasPermitidas l WHERE l IN :ligas)")
     List<Bolao> findByPrivadoFalseAndLigasAndDonoIdNot(@Param("ligas") List<String> ligas, @Param("donoId") UUID donoId);
+
+
 }

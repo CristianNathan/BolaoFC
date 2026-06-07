@@ -12,6 +12,8 @@ public interface BolaoParticipanteRepository extends JpaRepository<BolaoParticip
 
     boolean existsByUserIdAndBolaoId(UUID userId, UUID bolaoId);
 
+    void deleteByUserIdAndBolaoId(UUID userId, UUID bolaoId);
+
     List<BolaoParticipante> findByUserId(UUID userId);
 
     List<BolaoParticipante> findByUser(User user);

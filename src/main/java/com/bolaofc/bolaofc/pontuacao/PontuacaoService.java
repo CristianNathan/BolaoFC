@@ -74,10 +74,15 @@ public class PontuacaoService {
             }
 
             palpite.setPontosGanhos(pontos);
-            palpite.setStatus(pontos > 0 ? PalpitesStatus.CORRETO : PalpitesStatus.INCORRETO);
+            if(placarExato){
+                palpite.setStatus(PalpitesStatus.PLACAR_EXATO);
+            }else if (acertouVencedor){
+                palpite.setStatus(PalpitesStatus.ACERTOU_VENCEDOR);
+            }else{
+                palpite.setStatus(PalpitesStatus.INCORRETO);
+            }
             palpiteRepository.save(palpite);
 
-            // Atualiza ranking do bolão deste palpite
             rankingService.atualizarEnviarRanking(bolao.getId()); // <-- corrigido
         }
     }
