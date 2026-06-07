@@ -28,7 +28,11 @@ export default function Register() {
     setLoading(true)
     try {
       await api.post('/auth/register', { nickname, email, senha })
-      navigate('/login')
+
+      // Login automático após registro
+      const res = await api.post('/auth/login', { email, senha })
+      localStorage.setItem('token', res.data.token)
+      navigate('/home')
     } catch (err) {
       const msg = err?.response?.data?.message
       setErro(msg || 'Erro ao criar conta. Tente novamente.')
