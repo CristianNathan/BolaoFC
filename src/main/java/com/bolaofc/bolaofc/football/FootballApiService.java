@@ -23,14 +23,14 @@ public class FootballApiService {
     }
 
     public String buscarPartidas() {
-        String seteDiasAtras = LocalDate.now().minusDays(7).toString();
-        String amanha = LocalDate.now().plusDays(2).toString();
+        String quatroDiasAtras = LocalDate.now().minusDays(4).toString();
+        String proximosCincoDias = LocalDate.now().plusDays(5).toString();
 
-        String ligas = "BSA,CL,PL,PD,BL1,SA,FL1";
+        String ligas = "BSA,CL,PL,PD,BL1,SA,FL1,WC";
 
         String urlPartidas = String.format(
                 "%s/matches?dateFrom=%s&dateTo=%s&competitions=%s",
-                apiUrl, seteDiasAtras, amanha, ligas
+                apiUrl, quatroDiasAtras, proximosCincoDias, ligas
         );
 
         HttpHeaders headers = new HttpHeaders();
@@ -38,7 +38,8 @@ public class FootballApiService {
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
         try {
-            System.out.println("Buscando apenas ligas principais: " + ligas);
+            System.out.println("Buscando ligas: " + ligas);
+            System.out.println("Período: " + quatroDiasAtras + " até " + proximosCincoDias);
             ResponseEntity<String> response = restTemplate.exchange(
                     urlPartidas,
                     HttpMethod.GET,

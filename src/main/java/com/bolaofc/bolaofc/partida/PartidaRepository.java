@@ -20,5 +20,6 @@ public interface PartidaRepository extends JpaRepository<Partida, UUID> {
 
     Optional<Partida> findByTimeCasaAndTimeForaAndDataPartida(String timeCasa, String timeFora, LocalDateTime dataPartida);
 
+    List<Partida> findByDataPartidaBetweenOrderByDataPartidaAsc(LocalDateTime inicio, LocalDateTime fim);
 
 }

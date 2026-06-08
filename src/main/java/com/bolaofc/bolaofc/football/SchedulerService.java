@@ -12,6 +12,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
@@ -39,6 +41,7 @@ public class SchedulerService {
     public void sincronizarPartidas() {
         try {
             String json = footballApiService.buscarPartidas();
+            System.out.println("JSON retornado: " + json);
             JsonNode root = objectMapper.readTree(json);
             JsonNode matches = root.get("matches");
 
@@ -57,7 +60,11 @@ public class SchedulerService {
                 String escudoCasa = match.get("homeTeam").get("crest").asText();
                 String escudoFora = match.get("awayTeam").get("crest").asText();
 
-                LocalDateTime dataPartida = LocalDateTime.parse(dataStr, DateTimeFormatter.ISO_DATE_TIME);
+                // Converte UTC corretamente
+                LocalDateTime dataPartida = ZonedDateTime
+                        .parse(dataStr, DateTimeFormatter.ISO_DATE_TIME)
+                        .withZoneSameInstant(ZoneOffset.UTC)
+                        .toLocalDateTime();
 
                 Optional<Partida> existente = partidaRepository
                         .findByTimeCasaAndTimeForaAndDataPartida(timeCasa, timeFora, dataPartida);
@@ -89,7 +96,6 @@ public class SchedulerService {
 
                 Partida partidaSalva = partidaRepository.save(partida);
 
-                // CORRIGIDO: remove o !eraFinalizada, verifica só se já foi calculado
                 if (statusApi.equals("FINISHED")) {
                     boolean jaCalculado = palpiteRepository
                             .findByPartidaId(partidaSalva.getId())
