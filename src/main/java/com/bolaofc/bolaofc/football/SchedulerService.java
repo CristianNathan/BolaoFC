@@ -35,7 +35,7 @@ public class SchedulerService {
         this.pontuacaoService = pontuacaoService;
     }
 
-    @Scheduled(fixedRate = 21600000)
+    @Scheduled(fixedRate = 86400000, initialDelay = 0)
     public void sincronizarPartidas() {
         try {
             String json = footballApiService.buscarPartidas();
