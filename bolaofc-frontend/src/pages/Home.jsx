@@ -58,7 +58,6 @@ export default function Home() {
   const jogosProximos = jogos
     .filter(j => j.status === 'TIMED' || j.status === 'SCHEDULED')
     .sort((a, b) => {
-      // Copa do Mundo sempre no topo
       const aWC = a.competition.name === 'FIFA World Cup' ? -1 : 0;
       const bWC = b.competition.name === 'FIFA World Cup' ? -1 : 0;
       if (aWC !== bWC) return aWC - bWC;
@@ -120,26 +119,16 @@ export default function Home() {
 
       <main style={styles.main}>
 
-        {/* Banner Copa do Mundo — aparece só quando há jogos da Copa */}
         {temCopaDoMundo && (
           <div style={styles.worldCupBanner}>
             <div style={styles.worldCupBannerInner}>
-              <span style={styles.worldCupBannerIcon}>🌍</span>
+              <span style={styles.worldCupBannerIcon}>🏆</span>
               <div>
-                <div style={styles.worldCupBannerTitle}>Copa do Mundo 2026</div>
+                <div style={styles.worldCupBannerTitle}>BOLÃO ESPECIAL · WORLD CUP 2026</div>
                 <div style={styles.worldCupBannerSub}>
-                  EUA · México · Canadá — jogos disponíveis abaixo
+                  🔥 Crie seu bolão exclusivo da Copa do Mundo agora!
                 </div>
               </div>
-              <button
-                style={styles.worldCupBannerBtn}
-                onClick={() => {
-                  handleAbaAtiva('PROXIMOS');
-                  setLigaSelecionada('FIFA World Cup');
-                }}
-              >
-                Ver jogos →
-              </button>
             </div>
           </div>
         )}
@@ -168,7 +157,6 @@ export default function Home() {
             </button>
           </div>
 
-          {/* Filtro por liga */}
           {!loading && ligasUnicas.length > 2 && (
             <div style={styles.leagueFilter}>
               {ligasUnicas.map(liga => {
@@ -208,7 +196,6 @@ export default function Home() {
                     ...(isWorldCup ? styles.gameCardWorldCup : {}),
                   }}
                 >
-                  {/* Faixa de destaque Copa do Mundo */}
                   {isWorldCup && (
                     <div style={styles.worldCupStrip}>
                       🏆 COPA DO MUNDO FIFA 2026
@@ -319,7 +306,6 @@ const styles = {
     cursor: 'pointer',
     fontWeight: 'bold',
     fontSize: '14px',
-    transition: '0.3s',
   },
   logoutBtn: {
     background: 'transparent',
@@ -333,40 +319,29 @@ const styles = {
 
   // ─── Banner Copa do Mundo ───────────────────────────────────────────────────
   worldCupBanner: {
-    background: 'linear-gradient(135deg, #003d1f 0%, #005c2e 50%, #003d1f 100%)',
-    border: '1px solid rgba(255, 215, 0, 0.4)',
+    background: 'linear-gradient(135deg, #0a0a0a 0%, #1a0a00 50%, #2a1500 100%)',
+    border: '1px solid rgba(255, 215, 0, 0.25)',
     borderRadius: '16px',
     padding: '20px 25px',
     marginBottom: '35px',
-    boxShadow: '0 0 30px rgba(255, 215, 0, 0.08)',
   },
   worldCupBannerInner: {
     display: 'flex',
     alignItems: 'center',
     gap: '18px',
   },
-  worldCupBannerIcon: { fontSize: '36px', flexShrink: 0 },
+  worldCupBannerIcon: { fontSize: '42px', flexShrink: 0 },
   worldCupBannerTitle: {
-    fontSize: '18px',
-    fontWeight: 'bold',
+    fontSize: '17px',
+    fontWeight: '900',
     color: '#ffd700',
-    marginBottom: '4px',
+    marginBottom: '5px',
+    letterSpacing: '2px',
+    textTransform: 'uppercase',
   },
   worldCupBannerSub: {
     fontSize: '13px',
-    color: 'rgba(255,255,255,0.6)',
-  },
-  worldCupBannerBtn: {
-    marginLeft: 'auto',
-    flexShrink: 0,
-    background: '#ffd700',
-    border: 'none',
-    color: '#000',
-    fontWeight: 'bold',
-    fontSize: '13px',
-    padding: '10px 18px',
-    borderRadius: '8px',
-    cursor: 'pointer',
+    color: 'rgba(255,220,150,0.8)',
   },
 
   // ─── Seção de jogos ────────────────────────────────────────────────────────
@@ -424,7 +399,6 @@ const styles = {
     fontWeight: '500',
     whiteSpace: 'nowrap',
   },
-  // Filtro Copa do Mundo — tom dourado
   leagueCardWorldCup: {
     flexShrink: 0,
     background: 'rgba(255,215,0,0.07)',
@@ -459,13 +433,11 @@ const styles = {
     marginBottom: '15px',
     border: '1px solid rgba(255,255,255,0.1)',
   },
-  // Variante Copa do Mundo
   gameCardWorldCup: {
     background: 'linear-gradient(135deg, rgba(0,100,60,0.35), rgba(0,50,30,0.5))',
     border: '1px solid rgba(255, 215, 0, 0.35)',
     boxShadow: '0 0 20px rgba(255, 215, 0, 0.07)',
   },
-  // Faixa dourada no topo do card
   worldCupStrip: {
     background: 'linear-gradient(90deg, transparent, rgba(255,215,0,0.15), transparent)',
     color: '#ffd700',
