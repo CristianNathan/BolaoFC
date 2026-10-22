@@ -35,7 +35,7 @@ public class PontuacaoService {
     }
 
     public void calcularPontuacao(Partida partida) {
-        List<Palpite> palpites = palpiteRepository.findByPartidaId(partida.getId()); // <-- corrigido
+        List<Palpite> palpites = palpiteRepository.findByPartidaId(partida.getId());
 
         for (Palpite palpite : palpites) {
 

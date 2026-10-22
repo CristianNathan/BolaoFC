@@ -8,6 +8,7 @@ import com.bolaofc.bolaofc.partida.PartidaRepository;
 import com.bolaofc.bolaofc.partida.StatusPartida;
 import com.bolaofc.bolaofc.transacao.Tipo;
 import com.bolaofc.bolaofc.transacao.TransacaoService;
+import com.bolaofc.bolaofc.transacao.TransacaoServiceTest;
 import com.bolaofc.bolaofc.user.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,8 +23,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PalpiteServiceTest {
@@ -87,6 +87,25 @@ class PalpiteServiceTest {
         when(partidaRepository.findById(data.jogoId())).thenReturn(Optional.of(partida));
         when(bolaoRepository.findById(data.bolaoId())).thenReturn(Optional.empty());
         assertThrows(RuntimeException.class, () -> palpiteService.fazerPalpite(data,user));
+    }
+    @Test
+    void editarPalpiteExistenteNaoCobraDeNovo(){
+        User user = new User("João", "joao123@gmail.com","joao123");
+        Partida partida = new Partida(UUID.randomUUID(),"Corinthians","Palmeiras",null,null, StatusPartida.AGENDADA, LocalDateTime.now(),null);
+        Bolao bolao = new Bolao(UUID.randomUUID(),"Bolao teste Junit","HGTG123",10,5,20,false, List.of(), Status.ABERTO,LocalDateTime.now(),user);
+        PalpiteRequestDTO data = new PalpiteRequestDTO(bolao.getId(),partida.getId(),3,0);
+        Palpite palpiteExistente = new Palpite(UUID.randomUUID(), 2, 1, 0, PalpitesStatus.PENDENTE, user, partida, bolao);
+        when(partidaRepository.findById(data.jogoId())).thenReturn(Optional.of(partida));
+        when(bolaoRepository.findById(data.bolaoId())).thenReturn(Optional.of(bolao));
+        when(palpiteRepository.findByUserAndPartidaAndBolao(user, partida, bolao)).thenReturn(Optional.of(palpiteExistente));
+        when(palpiteRepository.save(any(Palpite.class))).thenReturn(palpiteExistente);
+
+        Palpite resultado = palpiteService.fazerPalpite(data, user);
+
+        assertEquals(3, resultado.getPalpiteCasa());
+        assertEquals(0, resultado.getPalpiteFora());
+        verify(transacaoService, never()).registrarTransacao(any(), anyDouble(), any(), anyString());
+        verify(palpiteRepository).save(palpiteExistente);
     }
 
 
