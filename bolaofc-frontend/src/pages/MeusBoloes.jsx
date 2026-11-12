@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
 const LIGAS_DISPONIVEIS = [
-  { id: 'WC',  nome: 'Copa do Mundo', emoji: '🌍', destaque: true },
   { id: 'PL',  nome: 'Premier League', emoji: '🏴󠁧󠁢󠁥󠁮󠁧󠁿' },
   { id: 'PD',  nome: 'La Liga', emoji: '🇪🇸' },
   { id: 'BL1', nome: 'Bundesliga', emoji: '🇩🇪' },
@@ -14,7 +13,6 @@ const LIGAS_DISPONIVEIS = [
 ];
 
 const getNomeLiga = (id) => LIGAS_DISPONIVEIS.find(x => x.id === id)?.nome ?? id;
-const isWC = (id) => id === 'WC';
 
 export default function MeusBoloes() {
   const navigate = useNavigate();
@@ -241,33 +239,29 @@ export default function MeusBoloes() {
         <section>
           <h3 style={styles.sectionTitle}>Seus Bolões</h3>
           <div style={styles.grid}>
-            {meusBoloes.length > 0 ? meusBoloes.map(b => {
-              const temCopa = b.ligasPermitidas?.includes('WC');
-              return (
-                <div key={b.id} style={{ ...styles.card, ...(temCopa ? styles.cardWorldCup : {}) }}>
-                  {temCopa && <div style={styles.wcStrip}>🌍 Copa do Mundo 2026</div>}
-                  <h4 style={styles.cardTitle}>{b.nome}</h4>
-                  <p style={styles.cardCodigo}>Código: <strong>{b.codigoConvite}</strong></p>
-                  {b.ligasPermitidas?.length > 0 && (
-                    <div style={styles.ligasWrap}>
-                      {b.ligasPermitidas.map(l => (
-                        <span key={l} style={isWC(l) ? styles.ligaTagWC : styles.ligaTag}>
-                          {getNomeLiga(l)}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  <div style={styles.cardActions}>
-                    <button onClick={() => navigate(`/bolao/${b.id}`)} style={styles.btnAcessar}>
-                      Detalhes
-                    </button>
-                    <button onClick={() => handleClicarSair(b)} style={styles.btnSair} disabled={processando}>
-                      Sair
-                    </button>
+            {meusBoloes.length > 0 ? meusBoloes.map(b => (
+              <div key={b.id} style={styles.card}>
+                <h4 style={styles.cardTitle}>{b.nome}</h4>
+                <p style={styles.cardCodigo}>Código: <strong>{b.codigoConvite}</strong></p>
+                {b.ligasPermitidas?.length > 0 && (
+                  <div style={styles.ligasWrap}>
+                    {b.ligasPermitidas.map(l => (
+                      <span key={l} style={styles.ligaTag}>
+                        {getNomeLiga(l)}
+                      </span>
+                    ))}
                   </div>
+                )}
+                <div style={styles.cardActions}>
+                  <button onClick={() => navigate(`/bolao/${b.id}`)} style={styles.btnAcessar}>
+                    Detalhes
+                  </button>
+                  <button onClick={() => handleClicarSair(b)} style={styles.btnSair} disabled={processando}>
+                    Sair
+                  </button>
                 </div>
-              );
-            }) : (
+              </div>
+            )) : (
               <p style={styles.empty}>Você ainda não participa de nenhum bolão.</p>
             )}
           </div>
@@ -284,9 +278,7 @@ export default function MeusBoloes() {
                 onClick={() => handleChip(liga.id)}
                 style={{
                   ...styles.chip,
-                  ...(ligasSelecionadas.includes(liga.id)
-                    ? liga.destaque ? styles.chipAtivoWC : styles.chipAtivo
-                    : liga.destaque ? styles.chipWC : {}),
+                  ...(ligasSelecionadas.includes(liga.id) ? styles.chipAtivo : {}),
                 }}
               >
                 {liga.emoji} {liga.nome}
@@ -298,29 +290,25 @@ export default function MeusBoloes() {
             <p style={styles.empty}>Buscando bolões...</p>
           ) : boloesPublicos.length > 0 ? (
             <div style={styles.grid}>
-              {boloesPublicos.map(b => {
-                const temCopa = b.ligasPermitidas?.includes('WC');
-                return (
-                  <div key={b.id} style={{ ...styles.cardPublico, ...(temCopa ? styles.cardPublicoWC : {}) }}>
-                    {temCopa && <div style={styles.wcStrip}>🌍 Copa do Mundo 2026</div>}
-                    <h4 style={styles.cardTitle}>{b.nome}</h4>
-                    <p style={styles.cardCodigo}>Código: <strong>{b.codigoConvite}</strong></p>
-                    <p style={styles.cardDono}>Criado por: <strong>{b.dono?.nickname ?? 'Desconhecido'}</strong></p>
-                    {b.ligasPermitidas?.length > 0 && (
-                      <div style={styles.ligasWrap}>
-                        {b.ligasPermitidas.map(l => (
-                          <span key={l} style={isWC(l) ? styles.ligaTagWC : styles.ligaTag}>
-                            {getNomeLiga(l)}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    <button onClick={() => handleEntrar(b.codigoConvite)} style={styles.btnEntrar}>
-                      Entrar Agora
-                    </button>
-                  </div>
-                );
-              })}
+              {boloesPublicos.map(b => (
+                <div key={b.id} style={styles.cardPublico}>
+                  <h4 style={styles.cardTitle}>{b.nome}</h4>
+                  <p style={styles.cardCodigo}>Código: <strong>{b.codigoConvite}</strong></p>
+                  <p style={styles.cardDono}>Criado por: <strong>{b.dono?.nickname ?? 'Desconhecido'}</strong></p>
+                  {b.ligasPermitidas?.length > 0 && (
+                    <div style={styles.ligasWrap}>
+                      {b.ligasPermitidas.map(l => (
+                        <span key={l} style={styles.ligaTag}>
+                          {getNomeLiga(l)}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <button onClick={() => handleEntrar(b.codigoConvite)} style={styles.btnEntrar}>
+                    Entrar Agora
+                  </button>
+                </div>
+              ))}
             </div>
           ) : (
             <p style={styles.empty}>
@@ -351,11 +339,6 @@ const styles = {
     borderRadius: '12px',
     border: '1px solid #00e676',
   },
-  cardWorldCup: {
-    background: 'linear-gradient(135deg, rgba(0,80,40,0.4), rgba(0,40,20,0.5))',
-    border: '1px solid rgba(255,215,0,0.4)',
-    boxShadow: '0 0 16px rgba(255,215,0,0.06)',
-  },
 
   // Cards bolões públicos
   cardPublico: {
@@ -363,24 +346,6 @@ const styles = {
     padding: '20px',
     borderRadius: '12px',
     border: '1px solid #555',
-  },
-  cardPublicoWC: {
-    background: 'linear-gradient(135deg, rgba(0,80,40,0.3), rgba(0,40,20,0.4))',
-    border: '1px solid rgba(255,215,0,0.35)',
-    boxShadow: '0 0 14px rgba(255,215,0,0.05)',
-  },
-
-  // Faixa Copa do Mundo
-  wcStrip: {
-    fontSize: '10px',
-    fontWeight: '800',
-    letterSpacing: '1.5px',
-    color: '#ffd700',
-    background: 'linear-gradient(90deg, transparent, rgba(255,215,0,0.12), transparent)',
-    textAlign: 'center',
-    padding: '4px',
-    borderRadius: '6px',
-    marginBottom: '10px',
   },
 
   cardTitle: { margin: '0 0 8px', fontSize: '16px' },
@@ -395,15 +360,6 @@ const styles = {
     padding: '2px 10px',
     fontSize: '11px',
   },
-  ligaTagWC: {
-    background: 'rgba(255,215,0,0.15)',
-    color: '#ffd700',
-    border: '1px solid rgba(255,215,0,0.5)',
-    borderRadius: '20px',
-    padding: '2px 10px',
-    fontSize: '11px',
-    fontWeight: '600',
-  },
   cardActions: { display: 'flex', gap: '8px', marginTop: '4px' },
   btnAcessar: { flex: 1, padding: '10px', background: '#00e676', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', color: '#000' },
   btnSair: { padding: '10px 14px', background: 'transparent', border: '1px solid #ff5252', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', color: '#ff5252', fontSize: '13px' },
@@ -413,8 +369,6 @@ const styles = {
   chipsWrap: { display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '20px' },
   chip: { padding: '6px 14px', borderRadius: '20px', border: '1px solid #555', background: 'transparent', color: '#ccc', cursor: 'pointer', fontSize: '13px' },
   chipAtivo: { background: '#00e676', border: '1px solid #00e676', color: '#0f2027', fontWeight: 'bold' },
-  chipWC: { border: '1px solid rgba(255,215,0,0.4)', color: '#ffd700', background: 'rgba(255,215,0,0.06)' },
-  chipAtivoWC: { background: 'rgba(255,215,0,0.2)', border: '1px solid #ffd700', color: '#ffd700', fontWeight: 'bold' },
 
   empty: { color: '#888', fontSize: '14px' },
 

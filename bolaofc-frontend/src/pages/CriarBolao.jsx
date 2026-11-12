@@ -16,7 +16,6 @@ export default function CriarBolao() {
   });
 
   const ligasDisponiveis = [
-    { id: 'WC',  nome: 'Copa do Mundo', pais: '🌍', destaque: true },
     { id: 'BSA', nome: 'Brasileirão',   pais: '🇧🇷' },
     { id: 'PL',  nome: 'Premier League',pais: '🏴󠁧󠁢󠁥󠁮󠁧󠁿' },
     { id: 'CL',  nome: 'Champions',     pais: '🏆' },
@@ -61,8 +60,6 @@ export default function CriarBolao() {
       setLoading(false);
     }
   };
-
-  const isWCSelecionada = formData.ligasPermitidas.includes('WC');
 
   return (
     <div style={styles.container}>
@@ -145,56 +142,23 @@ export default function CriarBolao() {
           <div style={styles.section}>
             <label style={styles.label}>Ligas Permitidas</label>
 
-            {/* Card especial Copa do Mundo */}
-            {(() => {
-              const wc = ligasDisponiveis.find(l => l.id === 'WC');
-              const wcAtiva = formData.ligasPermitidas.includes('WC');
-              return (
-                <div
-                  onClick={() => handleLigaToggle('WC')}
-                  style={wcAtiva ? styles.wcCardActive : styles.wcCard}
-                >
-                  <span style={styles.wcEmoji}>🌍</span>
-                  <div style={styles.wcInfo}>
-                    <span style={wcAtiva ? styles.wcNomeActive : styles.wcNome}>
-                      Copa do Mundo FIFA 2026
-                    </span>
-                    <span style={styles.wcSub}>EUA · México · Canadá</span>
-                  </div>
-                  <span style={wcAtiva ? styles.wcCheckActive : styles.wcCheck}>
-                    {wcAtiva ? '✓' : '+'}
-                  </span>
-                </div>
-              );
-            })()}
-
-            {/* Grid das outras ligas */}
             <div style={styles.grid}>
-              {ligasDisponiveis
-                .filter(l => l.id !== 'WC')
-                .map(liga => (
-                  <div
-                    key={liga.id}
-                    onClick={() => handleLigaToggle(liga.id)}
-                    style={
-                      formData.ligasPermitidas.includes(liga.id)
-                        ? styles.ligaActive
-                        : styles.liga
-                    }
-                  >
-                    <span style={{ fontSize: '18px' }}>{liga.pais}</span>
-                    <span style={{ fontSize: '12px' }}>{liga.nome}</span>
-                  </div>
-                ))}
+              {ligasDisponiveis.map(liga => (
+                <div
+                  key={liga.id}
+                  onClick={() => handleLigaToggle(liga.id)}
+                  style={
+                    formData.ligasPermitidas.includes(liga.id)
+                      ? styles.ligaActive
+                      : styles.liga
+                  }
+                >
+                  <span style={{ fontSize: '18px' }}>{liga.pais}</span>
+                  <span style={{ fontSize: '12px' }}>{liga.nome}</span>
+                </div>
+              ))}
             </div>
           </div>
-
-          {/* Aviso se Copa do Mundo selecionada */}
-          {isWCSelecionada && (
-            <div style={styles.wcAviso}>
-              🏆 Copa do Mundo incluída! Os palpites da Copa valerão os mesmos pontos configurados acima.
-            </div>
-          )}
 
           <button type="submit" disabled={loading} style={styles.btnSubmit}>
             {loading ? 'Criando Bolão...' : 'GERAR MEU BOLÃO'}
@@ -284,62 +248,6 @@ const styles = {
     fontWeight: 'bold',
     transition: '0.2s',
     flex: 1,
-  },
-
-  // ─── Copa do Mundo card especial ──────────────────────────────────────────
-  wcCard: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '14px',
-    padding: '14px 16px',
-    borderRadius: '10px',
-    background: 'rgba(255,215,0,0.05)',
-    border: '1.5px solid rgba(255,215,0,0.25)',
-    cursor: 'pointer',
-    marginBottom: '4px',
-    transition: '0.2s',
-  },
-  wcCardActive: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '14px',
-    padding: '14px 16px',
-    borderRadius: '10px',
-    background: 'rgba(255,215,0,0.15)',
-    border: '1.5px solid #ffd700',
-    cursor: 'pointer',
-    marginBottom: '4px',
-    boxShadow: '0 0 14px rgba(255,215,0,0.12)',
-    transition: '0.2s',
-  },
-  wcEmoji: { fontSize: '26px', flexShrink: 0 },
-  wcInfo: { display: 'flex', flexDirection: 'column', gap: '2px', flex: 1 },
-  wcNome: { fontSize: '14px', color: '#ffd700', fontWeight: '600' },
-  wcNomeActive: { fontSize: '14px', color: '#ffd700', fontWeight: '700' },
-  wcSub: { fontSize: '11px', color: 'rgba(255,255,255,0.45)' },
-  wcCheck: {
-    fontSize: '18px',
-    color: 'rgba(255,215,0,0.4)',
-    fontWeight: 'bold',
-    flexShrink: 0,
-  },
-  wcCheckActive: {
-    fontSize: '18px',
-    color: '#ffd700',
-    fontWeight: 'bold',
-    flexShrink: 0,
-  },
-
-  // ─── Aviso Copa selecionada ────────────────────────────────────────────────
-  wcAviso: {
-    background: 'rgba(255,215,0,0.08)',
-    border: '1px solid rgba(255,215,0,0.3)',
-    borderRadius: '8px',
-    padding: '12px 14px',
-    fontSize: '12px',
-    color: '#ffd700',
-    marginBottom: '16px',
-    lineHeight: '1.5',
   },
 
   infoText: { fontSize: '11px', color: '#888', marginTop: '5px' },

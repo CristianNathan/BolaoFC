@@ -30,7 +30,6 @@ export default function Home() {
 
   const formatarNomeCompeticao = (nome) => {
     const nomesAmigaveis = {
-      'FIFA World Cup':                '🌍 Copa do Mundo 2026',
       'Primera Division':              'La Liga 🇪🇸',
       'Premier League':                'Premier League 🏴󠁧󠁢󠁥󠁮󠁧󠁿',
       'Campeonato Brasileiro Série A': 'Brasileirão 🇧🇷',
@@ -57,12 +56,7 @@ export default function Home() {
   const jogosAoVivo = jogos.filter(j => j.status === 'IN_PLAY' || j.status === 'PAUSED');
   const jogosProximos = jogos
     .filter(j => j.status === 'TIMED' || j.status === 'SCHEDULED')
-    .sort((a, b) => {
-      const aWC = a.competition.name === 'FIFA World Cup' ? -1 : 0;
-      const bWC = b.competition.name === 'FIFA World Cup' ? -1 : 0;
-      if (aWC !== bWC) return aWC - bWC;
-      return new Date(a.utcDate) - new Date(b.utcDate);
-    });
+    .sort((a, b) => new Date(a.utcDate) - new Date(b.utcDate));
   const jogosFinalizados = jogos
     .filter(j => j.status === 'FINISHED')
     .sort((a, b) => new Date(b.utcDate) - new Date(a.utcDate));
@@ -101,8 +95,6 @@ export default function Home() {
     }
   };
 
-  const temCopaDoMundo = jogos.some(j => j.competition.name === 'FIFA World Cup');
-
   return (
     <div style={styles.container}>
       <header style={styles.header}>
@@ -118,20 +110,6 @@ export default function Home() {
       </header>
 
       <main style={styles.main}>
-
-        {temCopaDoMundo && (
-          <div style={styles.worldCupBanner}>
-            <div style={styles.worldCupBannerInner}>
-              <span style={styles.worldCupBannerIcon}>🏆</span>
-              <div>
-                <div style={styles.worldCupBannerTitle}>BOLÃO ESPECIAL · WORLD CUP 2026</div>
-                <div style={styles.worldCupBannerSub}>
-                  🔥 Crie seu bolão exclusivo da Copa do Mundo agora!
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         <section style={styles.section}>
           <h2 style={styles.sectionTitle}>Jogos Reais</h2>
@@ -159,93 +137,51 @@ export default function Home() {
 
           {!loading && ligasUnicas.length > 2 && (
             <div style={styles.leagueFilter}>
-              {ligasUnicas.map(liga => {
-                const isWC = liga === 'FIFA World Cup';
-                const isActive = ligaSelecionada === liga;
-                return (
-                  <button
-                    key={liga}
-                    onClick={() => setLigaSelecionada(liga)}
-                    style={
-                      isActive && isWC
-                        ? styles.leagueCardWorldCupActive
-                        : isActive
-                        ? styles.leagueCardActive
-                        : isWC
-                        ? styles.leagueCardWorldCup
-                        : styles.leagueCard
-                    }
-                  >
-                    {liga === 'TODAS' ? '⚽ Todas' : formatarNomeCompeticao(liga)}
-                  </button>
-                );
-              })}
+              {ligasUnicas.map(liga => (
+                <button
+                  key={liga}
+                  onClick={() => setLigaSelecionada(liga)}
+                  style={ligaSelecionada === liga ? styles.leagueCardActive : styles.leagueCard}
+                >
+                  {liga === 'TODAS' ? '⚽ Todas' : formatarNomeCompeticao(liga)}
+                </button>
+              ))}
             </div>
           )}
 
           {loading ? (
             <p style={styles.loadingText}>Buscando informações no campo... ⏳</p>
           ) : getJogosExibidos().length > 0 ? (
-            getJogosExibidos().map(jogo => {
-              const isWorldCup = jogo.competition.name === 'FIFA World Cup';
-              return (
-                <div
-                  key={jogo.id}
-                  style={{
-                    ...styles.gameCard,
-                    ...(isWorldCup ? styles.gameCardWorldCup : {}),
-                  }}
-                >
-                  {isWorldCup && (
-                    <div style={styles.worldCupStrip}>
-                      🏆 COPA DO MUNDO FIFA 2026
-                    </div>
-                  )}
+            getJogosExibidos().map(jogo => (
+              <div key={jogo.id} style={styles.gameCard}>
+                <div style={styles.leagueBadge}>
+                  {formatarNomeCompeticao(jogo.competition.name)}
+                </div>
 
-                  <div
-                    style={{
-                      ...styles.leagueBadge,
-                      ...(isWorldCup ? styles.leagueBadgeWorldCup : {}),
-                    }}
-                  >
-                    {formatarNomeCompeticao(jogo.competition.name)}
+                <div style={styles.matchContent}>
+                  <div style={styles.teamInfo}>
+                    <img src={jogo.homeTeam.crest} alt="escudo" style={styles.crest} />
+                    <span style={styles.teamName}>{jogo.homeTeam.name}</span>
                   </div>
 
-                  <div style={styles.matchContent}>
-                    <div style={styles.teamInfo}>
-                      <img src={jogo.homeTeam.crest} alt="escudo" style={styles.crest} />
-                      <span style={styles.teamName}>{jogo.homeTeam.name}</span>
+                  <div style={styles.scoreBoard}>
+                    <div style={styles.scoreText}>
+                      {jogo.status === 'TIMED' || jogo.status === 'SCHEDULED'
+                        ? 'VS'
+                        : `${jogo.score.fullTime.home ?? 0} - ${jogo.score.fullTime.away ?? 0}`}
                     </div>
+                    <div style={styles.timeBadge}>
+                      {jogo.status === 'IN_PLAY' ? '🔴 AO VIVO' : formatarDataJogo(jogo.utcDate)}
+                    </div>
+                  </div>
 
-                    <div style={styles.scoreBoard}>
-                      <div
-                        style={{
-                          ...styles.scoreText,
-                          ...(isWorldCup ? styles.scoreTextWorldCup : {}),
-                        }}
-                      >
-                        {jogo.status === 'TIMED' || jogo.status === 'SCHEDULED'
-                          ? 'VS'
-                          : `${jogo.score.fullTime.home ?? 0} - ${jogo.score.fullTime.away ?? 0}`}
-                      </div>
-                      <div
-                        style={{
-                          ...styles.timeBadge,
-                          ...(isWorldCup ? styles.timeBadgeWorldCup : {}),
-                        }}
-                      >
-                        {jogo.status === 'IN_PLAY' ? '🔴 AO VIVO' : formatarDataJogo(jogo.utcDate)}
-                      </div>
-                    </div>
-
-                    <div style={styles.teamInfo}>
-                      <img src={jogo.awayTeam.crest} alt="escudo" style={styles.crest} />
-                      <span style={styles.teamName}>{jogo.awayTeam.name}</span>
-                    </div>
+                  <div style={styles.teamInfo}>
+                    <img src={jogo.awayTeam.crest} alt="escudo" style={styles.crest} />
+                    <span style={styles.teamName}>{jogo.awayTeam.name}</span>
                   </div>
                 </div>
-              );
-            })
+              </div>
+            ))
           ) : (
             <p style={styles.emptyText}>Nenhum jogo nesta categoria para o período.</p>
           )}
@@ -317,33 +253,6 @@ const styles = {
   },
   main: { maxWidth: '1000px', margin: '0 auto', padding: '40px 20px' },
 
-  // ─── Banner Copa do Mundo ───────────────────────────────────────────────────
-  worldCupBanner: {
-    background: 'linear-gradient(135deg, #0a0a0a 0%, #1a0a00 50%, #2a1500 100%)',
-    border: '1px solid rgba(255, 215, 0, 0.25)',
-    borderRadius: '16px',
-    padding: '20px 25px',
-    marginBottom: '35px',
-  },
-  worldCupBannerInner: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '18px',
-  },
-  worldCupBannerIcon: { fontSize: '42px', flexShrink: 0 },
-  worldCupBannerTitle: {
-    fontSize: '17px',
-    fontWeight: '900',
-    color: '#ffd700',
-    marginBottom: '5px',
-    letterSpacing: '2px',
-    textTransform: 'uppercase',
-  },
-  worldCupBannerSub: {
-    fontSize: '13px',
-    color: 'rgba(255,220,150,0.8)',
-  },
-
   // ─── Seção de jogos ────────────────────────────────────────────────────────
   section: {},
   sectionTitle: { marginBottom: '20px', fontSize: '22px', fontWeight: 'bold' },
@@ -399,31 +308,6 @@ const styles = {
     fontWeight: '500',
     whiteSpace: 'nowrap',
   },
-  leagueCardWorldCup: {
-    flexShrink: 0,
-    background: 'rgba(255,215,0,0.07)',
-    border: '1.5px solid rgba(255,215,0,0.4)',
-    color: '#ffd700',
-    borderRadius: '20px',
-    padding: '7px 16px',
-    cursor: 'pointer',
-    fontSize: '12px',
-    fontWeight: '600',
-    whiteSpace: 'nowrap',
-  },
-  leagueCardWorldCupActive: {
-    flexShrink: 0,
-    background: 'rgba(255,215,0,0.2)',
-    border: '1.5px solid #ffd700',
-    color: '#ffd700',
-    borderRadius: '20px',
-    padding: '7px 16px',
-    cursor: 'pointer',
-    fontSize: '12px',
-    fontWeight: '700',
-    whiteSpace: 'nowrap',
-    boxShadow: '0 0 10px rgba(255,215,0,0.2)',
-  },
 
   // ─── Cards de jogo ─────────────────────────────────────────────────────────
   gameCard: {
@@ -433,22 +317,6 @@ const styles = {
     marginBottom: '15px',
     border: '1px solid rgba(255,255,255,0.1)',
   },
-  gameCardWorldCup: {
-    background: 'linear-gradient(135deg, rgba(0,100,60,0.35), rgba(0,50,30,0.5))',
-    border: '1px solid rgba(255, 215, 0, 0.35)',
-    boxShadow: '0 0 20px rgba(255, 215, 0, 0.07)',
-  },
-  worldCupStrip: {
-    background: 'linear-gradient(90deg, transparent, rgba(255,215,0,0.15), transparent)',
-    color: '#ffd700',
-    fontSize: '10px',
-    fontWeight: '800',
-    letterSpacing: '2px',
-    textAlign: 'center',
-    padding: '4px',
-    borderRadius: '6px',
-    marginBottom: '10px',
-  },
   leagueBadge: {
     fontSize: '11px',
     textTransform: 'uppercase',
@@ -457,11 +325,6 @@ const styles = {
     marginBottom: '12px',
     textAlign: 'center',
     letterSpacing: '1px',
-  },
-  leagueBadgeWorldCup: {
-    color: '#ffd700',
-    fontSize: '12px',
-    letterSpacing: '2px',
   },
   matchContent: {
     display: 'flex',
@@ -479,9 +342,7 @@ const styles = {
   crest: { width: '35px', height: '35px', objectFit: 'contain' },
   scoreBoard: { textAlign: 'center', width: '30%' },
   scoreText: { fontSize: '22px', fontWeight: 'bold', letterSpacing: '2px' },
-  scoreTextWorldCup: { color: '#ffd700' },
   timeBadge: { fontSize: '11px', color: '#00e676', marginTop: '5px', fontWeight: 'bold' },
-  timeBadgeWorldCup: { color: '#ffd700' },
 
   // ─── Seção de ações ────────────────────────────────────────────────────────
   actionSection: {
