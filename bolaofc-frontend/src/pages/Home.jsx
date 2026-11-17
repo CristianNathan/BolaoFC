@@ -11,6 +11,27 @@ export default function Home() {
   const [entrando, setEntrando] = useState(false);
   const [ligaSelecionada, setLigaSelecionada] = useState('TODAS');
 
+  // ─── Saudação ──────────────────────────────────────────────────────────────
+  const pegarNicknameDoToken = () => {
+    try {
+      const token = localStorage.getItem('token');
+      const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(atob(base64));
+      return payload.nickname || payload.nome || payload.username || null;
+    } catch {
+      return null;
+    }
+  };
+
+  const nickname = localStorage.getItem('nickname') || pegarNicknameDoToken() || 'jogador';
+
+  const getSaudacao = () => {
+    const hora = new Date().getHours();
+    if (hora >= 5 && hora < 12) return 'Bom dia';
+    if (hora >= 12 && hora < 18) return 'Boa tarde';
+    return 'Boa noite';
+  };
+
   useEffect(() => {
     api.get('/api/futebol/jogos-reais')
       .then(response => {
@@ -27,6 +48,12 @@ export default function Home() {
     setAbaAtiva(aba);
     setLigaSelecionada('TODAS');
   };
+
+  const handleSair = () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('nickname');
+  navigate('/login');
+};
 
   const formatarNomeCompeticao = (nome) => {
     const nomesAmigaveis = {
@@ -103,13 +130,20 @@ export default function Home() {
           <button style={styles.meusBoloesBtn} onClick={() => navigate('/meus-boloes')}>
             🏆 Meus Bolões
           </button>
-          <button style={styles.logoutBtn} onClick={() => navigate('/login')}>
+          <button style={styles.logoutBtn} onClick={handleSair}>
             Sair
           </button>
         </div>
       </header>
 
       <main style={styles.main}>
+
+        <div style={styles.welcome}>
+          <h1 style={styles.welcomeTitle}>
+            {getSaudacao()}, <span style={styles.nick}>{nickname}</span>! 👋
+          </h1>
+          <p style={styles.welcomeSub}>Olá novamente, seja bem-vindo ao Bolão FC.</p>
+        </div>
 
         <section style={styles.section}>
           <h2 style={styles.sectionTitle}>Jogos Reais</h2>
@@ -252,6 +286,12 @@ const styles = {
     fontWeight: 'bold',
   },
   main: { maxWidth: '1000px', margin: '0 auto', padding: '40px 20px' },
+
+  // ─── Boas-vindas ───────────────────────────────────────────────────────────
+  welcome: { marginBottom: '35px' },
+  welcomeTitle: { fontSize: '28px', fontWeight: 'bold', margin: 0 },
+  nick: { color: '#00e676' },
+  welcomeSub: { color: 'rgba(255,255,255,0.6)', marginTop: '6px' },
 
   // ─── Seção de jogos ────────────────────────────────────────────────────────
   section: {},

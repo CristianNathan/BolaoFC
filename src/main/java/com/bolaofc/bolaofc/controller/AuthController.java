@@ -34,6 +34,11 @@ public class AuthController {
         String email = data.get("email");
         String senhaPura = data.get("senha");
 
+        // Valida formato do nickname
+        if (nickname == null || !nickname.matches("^[a-zA-Z0-9_]{3,20}$")) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Nickname inválido. Use só letras, números e _ (3 a 20 caracteres)."));
+        }
+
         // Valida email duplicado
         if (userService.buscarPorEmail(email) != null) {
             return ResponseEntity.badRequest().body(Map.of("message", "E-mail já está em uso."));
@@ -41,11 +46,6 @@ public class AuthController {
 
         if (userService.existePorNickname(nickname)) {
             return ResponseEntity.badRequest().body(Map.of("message", "Nickname já está em uso. Escolha outro."));
-        }
-
-        // Valida formato do nickname
-        if (nickname == null || !nickname.matches("^[a-zA-Z0-9_]{3,20}$")) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Nickname inválido. Use só letras, números e _ (3 a 20 caracteres)."));
         }
 
         User newUser = new User();
@@ -70,8 +70,13 @@ public class AuthController {
             var usernameSenha = new UsernamePasswordAuthenticationToken(email, senhaDigitada);
             var auth = authenticationManager.authenticate(usernameSenha);
 
-            var token = tokenService.generateToken((User) auth.getPrincipal());
-            return ResponseEntity.ok(Map.of("token", token));
+            User usuarioLogado = (User) auth.getPrincipal();
+            var token = tokenService.generateToken(usuarioLogado);
+
+            return ResponseEntity.ok(Map.of(
+                    "token", token,
+                    "nickname", usuarioLogado.getNickname()
+            ));
 
         } catch (Exception e) {
             return ResponseEntity.status(401).body("Credenciais inválidas: " + e.getMessage());
