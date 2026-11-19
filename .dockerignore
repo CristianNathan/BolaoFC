@@ -1,0 +1,7 @@
+target
+.git
+.idea
+*.iml
+.env
+bolaofc-frontend
+node_modules
