@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react'
 import { Client } from '@stomp/stompjs'
-import SockJS from 'sockjs-client'
 
-const API_URL = import.meta.env.VITE_API_URL
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+const WS_URL = API_URL.replace(/^http/, 'ws') + '/ws/websocket'
 
 export function useTopic(topic, onMessage) {
   const handlerRef = useRef(onMessage)
@@ -12,7 +12,7 @@ export function useTopic(topic, onMessage) {
     if (!topic) return
 
     const client = new Client({
-      webSocketFactory: () => new SockJS(`${API_URL}/ws`),
+      brokerURL: WS_URL,
       reconnectDelay: 5000,
       onConnect: () => {
         client.subscribe(topic, (msg) => {
