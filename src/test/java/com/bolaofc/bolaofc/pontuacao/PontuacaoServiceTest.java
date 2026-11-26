@@ -165,6 +165,20 @@ public class PontuacaoServiceTest {
         verify(userRepository).save(user);
         verify(palpiteRepository).save(palpite);
     }
+    @Test
+    void atualizaRankingUmaVezPorBolaoMesmoComVariosPalpites(){
+        User user1 = new User("João", "joao123@gmail.com","joao123");
+        User user2 = new User("Maria", "maria@gmail.com","maria123");
+        Bolao bolao = new Bolao(UUID.randomUUID(), "Bolao teste Junit", "HGTG123", 10, 5, 20, false, List.of(), Status.ABERTO, LocalDateTime.now(), user1);
+        Partida partida = new Partida(UUID.randomUUID(),"Corinthians","Palmeiras",2,1, StatusPartida.FINALIZADA,LocalDateTime.now(),bolao);
+        Palpite palpite1 = new Palpite(UUID.randomUUID(), 2, 1, 0, PalpitesStatus.PENDENTE, user1, partida, bolao);
+        Palpite palpite2 = new Palpite(UUID.randomUUID(), 1, 0, 0, PalpitesStatus.PENDENTE, user2, partida, bolao);
+        when(palpiteRepository.findByPartidaId(partida.getId())).thenReturn(List.of(palpite1, palpite2));
+
+        pontuacaoService.calcularPontuacao(partida);
+
+        verify(rankingService, times(1)).atualizarEnviarRanking(bolao.getId());
+    }
 
 
 }

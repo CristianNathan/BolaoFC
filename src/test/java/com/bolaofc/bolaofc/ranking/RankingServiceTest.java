@@ -10,18 +10,20 @@ import com.bolaofc.bolaofc.palpite.PalpitesStatus;
 import com.bolaofc.bolaofc.partida.Partida;
 import com.bolaofc.bolaofc.partida.StatusPartida;
 import com.bolaofc.bolaofc.user.User;
-import com.bolaofc.bolaofc.bolao.BolaoParticipante;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -30,10 +32,11 @@ import static org.mockito.Mockito.when;
 class RankingServiceTest {
 
     @Mock
-    private
-    BolaoParticipanteRepository participanteRepository;
+    private BolaoParticipanteRepository participanteRepository;
     @Mock
     private PalpiteRepository palpiteRepository;
+    @Mock
+    private SimpMessagingTemplate messagingTemplate;
 
     @InjectMocks
     private RankingService rankingService;
@@ -48,10 +51,14 @@ class RankingServiceTest {
         Palpite palpite2 = new Palpite(UUID.randomUUID(), 3, 1, 5, PalpitesStatus.PENDENTE, user, partida, bolao);
         when(participanteRepository.findAll()).thenReturn(List.of(participante));
         when(palpiteRepository.findByUserAndBolaoId(user, bolao.getId())).thenReturn(List.of(palpite1, palpite2));
+
         rankingService.atualizarEnviarRanking(bolao.getId());
+
         assertEquals(15L, participante.getPontosTotal());
         verify(participanteRepository).save(participante);
+        verify(messagingTemplate).convertAndSend(eq("/topic/ranking/" + bolao.getId()), any(Object.class));
     }
+
     @Test
     void palpiteComPontosNulosContaComoZero() {
         User user = new User("João", "joao123@gmail.com","joao123");
@@ -68,6 +75,7 @@ class RankingServiceTest {
         assertEquals(10L, participante.getPontosTotal());
         verify(participanteRepository).save(participante);
     }
+
     @Test
     void obterRankingFiltraPorBolaoEOrdenaDoMaiorPraMenor() {
         User user1 = new User("João", "joao123@gmail.com", "joao123");

@@ -12,7 +12,10 @@ import com.bolaofc.bolaofc.transacao.TransacaoService;
 import com.bolaofc.bolaofc.user.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 @Service
 public class PontuacaoService {
@@ -36,6 +39,7 @@ public class PontuacaoService {
 
     public void calcularPontuacao(Partida partida) {
         List<Palpite> palpites = palpiteRepository.findByPartidaId(partida.getId());
+        Set<UUID> boloesAfetados = new HashSet<>();
 
         for (Palpite palpite : palpites) {
 
@@ -74,16 +78,18 @@ public class PontuacaoService {
             }
 
             palpite.setPontosGanhos(pontos);
-            if(placarExato){
+            if (placarExato) {
                 palpite.setStatus(PalpitesStatus.PLACAR_EXATO);
-            }else if (acertouVencedor){
+            } else if (acertouVencedor) {
                 palpite.setStatus(PalpitesStatus.ACERTOU_VENCEDOR);
-            }else{
+            } else {
                 palpite.setStatus(PalpitesStatus.INCORRETO);
             }
             palpiteRepository.save(palpite);
 
-            rankingService.atualizarEnviarRanking(bolao.getId()); // <-- corrigido
+            boloesAfetados.add(bolao.getId());
         }
+
+        boloesAfetados.forEach(rankingService::atualizarEnviarRanking);
     }
 }

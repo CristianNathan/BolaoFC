@@ -4,6 +4,7 @@ import com.bolaofc.bolaofc.bolao.BolaoParticipante;
 import com.bolaofc.bolaofc.bolao.BolaoParticipanteRepository;
 import com.bolaofc.bolaofc.palpite.Palpite;
 import com.bolaofc.bolaofc.palpite.PalpiteRepository;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,16 +16,30 @@ public class RankingService {
 
     private final BolaoParticipanteRepository participanteRepository;
     private final PalpiteRepository palpiteRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
-    public RankingService(BolaoParticipanteRepository participanteRepository, PalpiteRepository palpiteRepository) {
+    public RankingService(BolaoParticipanteRepository participanteRepository,
+                          PalpiteRepository palpiteRepository,
+                          SimpMessagingTemplate messagingTemplate) {
         this.participanteRepository = participanteRepository;
         this.palpiteRepository = palpiteRepository;
+        this.messagingTemplate = messagingTemplate;
     }
 
     public List<BolaoParticipante> obterRankingDoBolao(UUID bolaoId) {
         return participanteRepository.findAll().stream()
                 .filter(p -> p.getBolao().getId().equals(bolaoId))
                 .sorted((p1, p2) -> p2.getPontosTotal().compareTo(p1.getPontosTotal()))
+                .toList();
+    }
+
+    public List<RankingResponseDTO> obterRankingDTO(UUID bolaoId) {
+        return obterRankingDoBolao(bolaoId).stream()
+                .map(p -> new RankingResponseDTO(
+                        p.getUser().getId(),
+                        p.getUser().getNickname(),
+                        p.getPontosTotal()
+                ))
                 .toList();
     }
 
@@ -44,5 +59,7 @@ public class RankingService {
             participante.setPontosTotal(somaPontos);
             participanteRepository.save(participante);
         }
+
+        messagingTemplate.convertAndSend("/topic/ranking/" + bolaoId, obterRankingDTO(bolaoId));
     }
 }
