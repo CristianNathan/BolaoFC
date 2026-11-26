@@ -49,10 +49,11 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of(
+        configuration.setAllowedOriginPatterns(List.of(
                 "http://localhost:5173",
                 "http://localhost:3000",
                 "https://bolao-fc-seven.vercel.app",
+                "https://bolao-*-cristian-f31d.vercel.app",
                 "https://jocular-cendol-3f0626.netlify.app"
         ));
         configuration.setAllowedMethods(List.of(
