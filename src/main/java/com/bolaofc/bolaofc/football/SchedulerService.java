@@ -60,7 +60,6 @@ public class SchedulerService {
                 String escudoCasa = match.get("homeTeam").get("crest").asText();
                 String escudoFora = match.get("awayTeam").get("crest").asText();
 
-                // Converte UTC corretamente
                 LocalDateTime dataPartida = ZonedDateTime
                         .parse(dataStr, DateTimeFormatter.ISO_DATE_TIME)
                         .withZoneSameInstant(ZoneOffset.UTC)

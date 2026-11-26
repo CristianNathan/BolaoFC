@@ -49,7 +49,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         configuration.setAllowedOrigins(List.of(
-                "http://localhost:5173",
+                "http://localhost:5173","http://localhost:3000",
                 "https://jocular-cendol-3f0626.netlify.app"
         ));
         configuration.setAllowedMethods(List.of(
