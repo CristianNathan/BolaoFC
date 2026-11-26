@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { useTopic } from '../hooks/useTopic';
 
 export default function DetalhesBolao() {
   const { id } = useParams();
@@ -56,6 +57,12 @@ export default function DetalhesBolao() {
         .finally(() => setLoadingRanking(false));
     }
   }, [abaAtiva, id]);
+
+  // Ranking em tempo real: o back publica a lista inteira neste tópico
+  useTopic(
+    abaAtiva === 'RANKING' && id ? `/topic/ranking/${id}` : null,
+    (novoRanking) => setRanking(novoRanking)
+  );
 
   const handleInputPalpite = (partidaId, campo, valor) => {
     setMeusPalpites(prev => ({
