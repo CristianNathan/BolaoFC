@@ -37,11 +37,10 @@ public class SchedulerService {
         this.pontuacaoService = pontuacaoService;
     }
 
-    @Scheduled(fixedRate = 86400000, initialDelay = 0)
+    @Scheduled(fixedRate = 120000, initialDelay = 0)
     public void sincronizarPartidas() {
         try {
             String json = footballApiService.buscarPartidas();
-            System.out.println("JSON retornado: " + json);
             JsonNode root = objectMapper.readTree(json);
             JsonNode matches = root.get("matches");
 
@@ -85,7 +84,7 @@ public class SchedulerService {
 
                 partida.setStatus(status);
 
-                if (statusApi.equals("FINISHED")) {
+                if (statusApi.equals("FINISHED") || statusApi.equals("IN_PLAY") || statusApi.equals("PAUSED")) {
                     JsonNode score = match.get("score").get("fullTime");
                     int golsCasa = score.get("home").isNull() ? 0 : score.get("home").asInt();
                     int golsFora = score.get("away").isNull() ? 0 : score.get("away").asInt();
